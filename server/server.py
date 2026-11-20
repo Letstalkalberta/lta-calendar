@@ -283,7 +283,7 @@ class H(BaseHTTPRequestHandler):
             k = (q.get("key") or [""])[0]
             if not ADMIN_KEY or not secrets.compare_digest(k, ADMIN_KEY): return self.out(403, page("No access", "<h1>No access</h1>"), "text/html; charset=utf-8")
             return self.out(200, review_page(k), "text/html; charset=utf-8")
-        if p == "/health": return self.out(200, {"ok": True})
+        if p == "/health": return self.out(200, {"ok": True, "version": (os.environ.get("RENDER_GIT_COMMIT") or "unknown")[:7]})
         if p == "/static/og.png" and (ROOT / "server/og.png").exists(): return self.out(200, (ROOT / "server/og.png").read_bytes(), "image/png", cache="public, max-age=86400")
         self.out(404, {"error": "Not found"})
 
