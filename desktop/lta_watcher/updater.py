@@ -20,7 +20,8 @@ def check_and_install(install=False):
     except Exception as e: return {"ok": False, "message": f"Couldn't check for updates ({e})."}
     if not tag or _v(tag) <= _v(VERSION): return {"ok": True, "current": VERSION, "latest": tag or VERSION, "update": False, "message": "You have the latest version."}
     if not install: return {"ok": True, "current": VERSION, "latest": tag, "update": True, "message": f"Version {tag.lstrip('v')} is available."}
-    if os.name != "nt" or not asset: return {"ok": False, "message": "Updates install on Windows only."}
+    if not asset: return {"ok": False, "message": f"Version {tag.lstrip('v')} is published, but its installer is still being built. Try again in a few minutes."}
+    if os.name != "nt": return {"ok": False, "message": "Updates install on Windows only."}
     path = os.path.join(tempfile.gettempdir(), asset["name"])
     urllib.request.urlretrieve(asset["browser_download_url"], path)
     subprocess.Popen([path, "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CLOSEAPPLICATIONS"], close_fds=True)
