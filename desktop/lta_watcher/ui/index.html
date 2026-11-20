@@ -114,7 +114,7 @@ async function renderReview(m){
   m.innerHTML=`<p class="muted">${items.length} item(s) found automatically. Open each source, check the details against it, fix anything that's off, then approve or reject. Nothing here is public yet.</p>`+items.map((x,i)=>`
   <div class="card" data-i="${i}"><div class="row"><h3 style="flex:1">${esc(x.title)}</h3><span class="tag ${esc(x.review?.confidence)}">${esc(x.review?.confidence||"")} confidence</span></div>
   <div class="muted">${esc(fmtWhen(x))} · ${esc(x.level)}${x.party?" · "+esc(x.party):""} · from ${esc(x.source?.name)} (${esc(x.source?.kind)} source)</div>
-  <div class="quote">“${esc(x.review?.evidence_quote)}”</div>
+  ${x.review?.name_quote&&x.review.name_quote!==x.review.evidence_quote?`<div class="quote">Event on the page: “${esc(x.review.name_quote)}”</div>`:""}<div class="quote">Date on the page: “${esc(x.review?.evidence_quote)}”</div>
   <p>${esc(x.description)}</p>
   <div class="row"><button data-open="${esc(x.source?.url)}">Open the source ↗</button><button data-edit>Edit details</button></div>
   <div data-form hidden><br><div class="grid3">

@@ -236,8 +236,9 @@ AI_TOOL = {
                 "candidates": {"type": "array", "items": {"type": "object", "properties": {"name": {"type": "string"}, "party_name": {"type": "string"}, "status": {"type": "string"}}, "required": ["name"]}},
                 "event_url": {"type": "string", "description": "Link to the event's own page if present in the text, else empty"},
                 "evidence_quote": {"type": "string", "description": "A short passage copied EXACTLY, character for character, from the page text that states the date of this event."},
+                "name_quote": {"type": "string", "description": "A short passage copied EXACTLY from the page text that names this specific event (its title or the meeting name). May be the same passage as evidence_quote when one line holds both."},
                 "confidence": {"type": "string", "enum": ["high", "medium", "low"]}
-            }, "required": ["title", "type", "level", "date", "summary", "evidence_quote", "confidence"]}}
+            }, "required": ["title", "type", "level", "date", "summary", "evidence_quote", "name_quote", "confidence"]}}
         }, "required": ["events"]
     }
 }
@@ -250,6 +251,7 @@ politics in Alberta. Do not report fundraisers or social events unless they are 
 Rules:
 - Never guess a date, time, place or candidate. If the text does not state it, leave the field empty.
 - evidence_quote must be copied exactly from the text, character for character, and must contain the date.
+- name_quote must be copied exactly from the text and must name this specific event, so a reviewer can find it on the page.
 - Times are Alberta local time.
 - summary must be your own neutral wording: no opinions, no adjectives about parties or people.
 - If there are no qualifying events, return an empty list.
@@ -308,9 +310,11 @@ def norm_ws(s): return re.sub(r"\s+", " ", s or "").strip().lower()
 def ai_items_to_pending(src, items, text, parties):
     out, flat = [], norm_ws(text)
     for it in items:
-        q = norm_ws(it.get("evidence_quote"))
+        q = norm_ws(it.get("evidence_quote")); nq = norm_ws(it.get("name_quote"))
         if not q or q not in flat:
-            _p(f"  [drop] quote not found on page: {it.get('title')!r}"); continue
+            _p(f"  [drop] date quote not found on page: {it.get('title')!r}"); continue
+        if not nq or nq not in flat or len(nq) < 6:
+            _p(f"  [drop] name quote not found on page: {it.get('title')!r}"); continue
         try: d = dt.date.fromisoformat(it["date"])
         except (ValueError, KeyError): _p(f"  [drop] bad date: {it.get('title')!r}"); continue
         if d < TODAY: continue
@@ -332,7 +336,7 @@ def ai_items_to_pending(src, items, text, parties):
                         links=[{"label": "Event page", "url": it["event_url"]}] if it.get("event_url", "").startswith("http") else [],
                         verified=False, origin="ai:" + src["id"])
         ev["source"]["kind"] = "secondary" if is_news else "primary"
-        ev["review"] = {"evidence_quote": it.get("evidence_quote"), "confidence": it.get("confidence"), "found": dt.datetime.now(AB).isoformat(timespec="minutes"), "model": MODEL}
+        ev["review"] = {"evidence_quote": it.get("evidence_quote"), "name_quote": it.get("name_quote"), "confidence": it.get("confidence"), "found": dt.datetime.now(AB).isoformat(timespec="minutes"), "model": MODEL}
         if not ev["end"]: ev.pop("end")
         out.append(ev)
     return out

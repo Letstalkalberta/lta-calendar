@@ -63,7 +63,7 @@ async function review(){
   const items=(await api("GET","review")).pending||[];
   if(!items.length){ m.innerHTML=`<div class="card"><h3>Nothing waiting</h3><p class="muted">Events the AI reader finds on party sites, Elections Alberta and in the news show up here for a person to check before they go public.</p></div>`; return; }
   m.innerHTML=items.map((x,i)=>`<div class="card" data-i="${i}"><h3>${esc(x.title)}</h3><div class="muted">${esc(when(x))}<br>${esc((x.location||{}).name||"")} ${esc((x.location||{}).address||"")}<br>${esc(x.level)}${x.party?" · "+esc(x.party):""} · ${esc(x.review?.confidence)} confidence</div>
-   <div class="quote">“${esc(x.review?.evidence_quote)}”</div><p>${esc(x.description)}</p>
+   ${x.review?.name_quote&&x.review.name_quote!==x.review.evidence_quote?`<div class="quote">Event on the page: “${esc(x.review.name_quote)}”</div>`:""}<div class="quote">Date on the page: “${esc(x.review?.evidence_quote)}”</div><p>${esc(x.description)}</p>
    <p><a href="${esc(x.source?.url)}" target="_blank" rel="noopener">Open the source: ${esc(x.source?.name)} ↗</a></p>
    <label class="check"><input type="checkbox" data-ok> I opened the source and the date, time and place match it.</label><div data-e></div>
    <div class="row"><button class="b p" data-a="approve">Approve</button><button class="b" data-a="reject">Reject</button></div></div>`).join("")+`<p class="muted">To fix details before approving, use LTA Watcher on a PC.</p>`;
