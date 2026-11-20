@@ -93,7 +93,7 @@ async function people(){
 async function status(){
   const st=await api("GET","status"), names=Object.fromEntries(st.nodes.map(n=>[n.id,n.name]));
   m.innerHTML=`<div class="card"><h3>AI reader</h3><p class="muted">${st.ai.on?"On":"Off: add ANTHROPIC_API_KEY in the server settings"} · ${st.ai.calls_today} of ${st.ai.daily_limit} page reads used today · ${st.pending} waiting for review</p></div>
-   <div class="card"><h3>Websites</h3>${st.sources.map(s=>{const r=s.run||{};return `<div class="item"><span class="dot ${r.last_error?"bad":(r.last_ok?"on":"")}"></span><b>${esc(s.name)}</b>${s.enabled===false?" (off)":""}<div class="muted">${s.kind.startsWith("ai")?"AI reader → review":"Official calendar"} · last checked ${esc(ago(r.last_checked))}${r.last_node?" by "+esc(names[r.last_node]||r.last_node):""}${r.last_error?"<br>"+esc(r.last_error.slice(0,120)):""}</div></div>`}).join("")}</div>
+   <div class="card"><h3>Websites</h3>${st.sources.map(s=>{const r=s.run||{};return `<div class="item"><span class="dot ${r.last_error?"bad":(r.last_ok?"on":"")}"></span><b>${esc(s.name)}</b>${s.enabled===false?" (off)":""}<div class="muted">${s.kind.startsWith("ai")?"AI reader → review":"Official calendar"} · last checked ${esc(ago(r.last_checked))}${r.last_node?" by "+esc(r.last_node==="server"?"the server":(names[r.last_node]||r.last_node)):""}${r.last_error?"<br>"+esc(r.last_error.slice(0,120)):""}</div></div>`}).join("")}</div>
    <div class="card"><h3>Recent actions</h3>${st.audit.map(a=>`<div class="item muted">${esc(ago(a.at))} · <b>${esc(a.who)}</b> ${esc(a.action)} ${esc(a.detail||a.target)}</div>`).join("")}</div>`;
 }
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{ tab=b.dataset.t; render(); });

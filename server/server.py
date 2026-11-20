@@ -371,7 +371,9 @@ def scheduler():
     while True:
         if time.time() - last_watch > 6 * 3600:
             try:
-                watch.run(stale_hours=24, lock=LOCK)
+                rep = watch.run(stale_hours=24, lock=LOCK)
+                for sid in rep.get("ok", []): hub.record_run(sid, "server", True)
+                for f in rep.get("failed", []): hub.record_run(f["id"], "server", False, error=f["error"])
             except Exception as ex: print("backup watch:", ex)
             last_watch = time.time()
         if os.environ.get("FCM_PROJECT_ID"):

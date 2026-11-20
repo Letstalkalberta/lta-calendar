@@ -407,7 +407,12 @@ def run(only=None, stale_hours=None, lock=None):
         _p(f"- {src['id']} ({src['kind']})")
         try:
             r = check_source(src, st.get("hash"))
-            items = ai_items_to_pending(src, ai_extract(src, r["text"]), r["text"], parties) if r["kind"] == "ai" else []
+            items = []
+            if r["kind"] == "ai":
+                if not (os.environ.get("LTA_FAKE_AI_FILE") or len(os.environ.get("ANTHROPIC_API_KEY", "").strip()) > 20):
+                    report["failed"].append({"id": src["id"], "error": "AI reader is off (no key on the server)"})
+                    continue  # don't remember this page, so it's read once the key is added
+                items = ai_items_to_pending(src, ai_extract(src, r["text"]), r["text"], parties)
             if r["kind"] == "unchanged": report["unchanged"].append(src["id"]); _p("  unchanged since last check")
             results.append((src, r, items)); report["ok"].append(src["id"])
         except Exception as e:

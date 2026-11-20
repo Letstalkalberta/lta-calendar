@@ -123,6 +123,7 @@ def record_run(src_id, node, ok, hash_=None, error=None):
         if not r: c.execute("INSERT INTO source_runs(source_id) VALUES(?)", (src_id,))
         if ok: c.execute("UPDATE source_runs SET last_checked=?, last_ok=?, last_node=?, last_hash=COALESCE(?,last_hash), last_error=NULL, fails=0 WHERE source_id=?", (t, t, node, hash_, src_id))
         else: c.execute("UPDATE source_runs SET last_checked=?, last_node=?, last_error=?, fails=fails+1 WHERE source_id=?", (t, node, (error or "")[:400], src_id))
+    if not ok: return  # failures are retried soon; only successful checks hold off the server's backup run
     # keep the server's backup cron from re-checking what a PC just did
     st = watch.jload(watch.STATE, {}); prev = st.get(src_id, {})
     st[src_id] = {"hash": hash_ or prev.get("hash"), "checked": t, "by": node}
