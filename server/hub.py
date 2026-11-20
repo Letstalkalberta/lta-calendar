@@ -217,6 +217,7 @@ def handle(hd, method, path, body):
                 evs = body.get("events") or []
                 for e in evs:  # a PC may only publish under its source's own origin
                     e["origin"] = "watcher:" + src["id"]; e["verified"] = True
+                watch.clean_structured(src, evs)
                 store.merge_structured(evs[:500]); store.save()
                 record_run(src["id"], node["id"], True)
                 hd.out(200, {"added": store.added, "updated": store.updated}); return True

@@ -178,6 +178,21 @@ def read_jsonld(src):
                                   links=[{"label": "Event page", "url": it.get("url", src["url"])}]))
     return out
 
+def clean_structured(src, events):
+    """Tidy events from official readers. Runs on the PC and again on the server, so fixes here
+    apply even to PCs running an older app version."""
+    base = src["url"].rstrip("/"); region = (src.get("region") or "").strip()
+    for ev in events:
+        if src["kind"] == "escribe":
+            for l in ev.get("links", []):  # eSCRIBE sometimes returns a relative link that doesn't open
+                m = re.search(r"[?&]Id=([0-9a-fA-F-]{8,})", l.get("url", ""))
+                if m: l["url"] = f"{base}/Meeting.aspx?Id={m.group(1)}&lang=English"
+            if ev.get("end", "") and re.search(r"T23:5\d", str(ev["end"])): ev["end"] = None  # placeholder end time
+        if region and ev.get("title", "").startswith(f"{region} {region} "):
+            ev["title"] = ev["title"][len(region) + 1:]
+        if not ev.get("end"): ev.pop("end", None)
+    return events
+
 def parse_any(s):
     if not s: return None
     s = str(s).strip()
@@ -327,7 +342,7 @@ def check_source(src, last_hash=None):
     kind = src["kind"]
     if kind in READERS:
         try:
-            return {"kind": "structured", "events": READERS[kind](src)}
+            return {"kind": "structured", "events": clean_structured(src, READERS[kind](src))}
         except Exception as e:
             if src.get("fallback") != "ai_page": raise
             _p(f"  structured reader failed ({e}); falling back to AI reader")
@@ -356,6 +371,9 @@ class Store:
                 ev["history"] = old.get("history", []) + [{"changed": TODAY.isoformat(), "was": {"start": old.get("start"), "end": old.get("end"), "location": old.get("location")}}]
                 self.by_id[ev["id"]] = ev; self.updated += 1; self.changes.append({"kind": "changed", "id": ev["id"]})
             elif old.get("origin", "").startswith("watcher:"):
+                for k in ("title", "links", "description", "type"):
+                    if ev.get(k) is not None: old[k] = ev[k]
+                if "end" not in ev: old.pop("end", None)
                 old["source"]["checked"] = TODAY.isoformat()
 
     def queue(self, items):
