@@ -1,12 +1,15 @@
 # Builds the LTA Watcher Windows installer.
 #  - Every push to main: builds and keeps the installer as a downloadable "artifact" (for testing).
-#  - Pushing a tag like v1.0.1: builds and publishes a GitHub Release. Every LTA PC sees the
-#    new release and can update itself from Settings > Check for updates.
+#  - Publishing a GitHub Release (tag like v1.0.1, made on github.com or by pushing the tag):
+#    builds and attaches the installer to it. Every LTA PC sees the new release and can update
+#    itself from Settings > Check for updates.
 name: Build Windows installer
 on:
   push:
     branches: [main]
     tags: ["v*"]
+  release:
+    types: [published]
   workflow_dispatch:
 
 permissions:

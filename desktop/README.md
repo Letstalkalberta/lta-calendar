@@ -51,7 +51,7 @@ python3 server/hub_admin.py pcs | users | disable-pc <id> | deactivate <email> |
 
 Automatic, on GitHub (once LTA's account and repository exist):
 - Every push to `main` builds the installer and keeps it under the workflow run's **Artifacts** for testing.
-- To release: bump `VERSION` in `desktop/lta_watcher/__init__.py`, commit, then tag it (`git tag v1.0.1 && git push --tags`). GitHub builds it, starts the app as a smoke test, and publishes a Release. PCs find the update under Settings → Check for updates.
+- To release: bump `VERSION` in `desktop/lta_watcher/__init__.py` and commit. Then on github.com go to Releases → Draft a new release, type the tag `v` + the version (e.g. `v1.0.1`), and click Publish. GitHub builds the installer, starts the app as a smoke test, and attaches it to the release. PCs find the update under Settings → Check for updates.
 - Set `UPDATE_REPO` in `desktop/lta_watcher/__init__.py` to the real `owner/repository` name.
 
 By hand, on any Windows PC: `powershell -ExecutionPolicy Bypass -File desktop\build.ps1` (needs Python 3.12 and Inno Setup 6).
