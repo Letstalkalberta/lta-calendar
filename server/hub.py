@@ -227,7 +227,10 @@ def handle(hd, method, path, body):
                 if not ok:  # don't record the hash, so the page is read again once AI is available
                     record_run(src["id"], node["id"], False, error=why); hd.out(200, {"queued": 0, "note": why}); return True
                 parties = watch.jload(DATA / "parties.json", {"parties": []})["parties"]
-                n = watch.ai_process(src, text, store, parties); store.save()
+                try: n = watch.ai_process(src, text, store, parties)
+                except RuntimeError as ex:  # key rejected, out of credit, etc.: don't mark the page as read
+                    record_run(src["id"], node["id"], False, error=str(ex)); hd.out(200, {"queued": 0, "note": str(ex)}); return True
+                store.save()
                 record_run(src["id"], node["id"], True, body.get("hash"))
                 hd.out(200, {"queued": n}); return True
         raise ValueError("Unknown result kind.")

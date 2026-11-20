@@ -275,7 +275,11 @@ def ai_extract(src, text):
             break
         except urllib.error.HTTPError as e:
             if e.code in (429, 500, 529) and attempt < 2: time.sleep(10 * (attempt + 1)); continue
-            _p(f"  [error] AI call failed for {src['id']}: {e.code} {e.read()[:300]!r}"); return []
+            detail = e.read()[:300].decode("utf-8", "replace")
+            _p(f"  [error] AI call failed for {src['id']}: {e.code} {detail}")
+            if e.code in (401, 403): raise RuntimeError("AI key was rejected (expired or revoked). Make a new key at console.anthropic.com and update ANTHROPIC_API_KEY in Render.")
+            if e.code == 400 and "credit" in detail.lower(): raise RuntimeError("Anthropic account is out of credit. Add credit at console.anthropic.com.")
+            raise RuntimeError(f"AI reader error {e.code}; will retry.")
     for block in res.get("content", []):
         if block.get("type") == "tool_use":
             return block["input"].get("events", [])
