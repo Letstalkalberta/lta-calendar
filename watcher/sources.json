@@ -1,0 +1,25 @@
+{
+  "_readme": "Sites the watcher checks. 'kind' picks the reader. Official structured readers (escribe, ics, wp_tribe, jsonld) publish straight to the calendar because the site itself is the primary source. 'ai_page' and 'ai_news' use the AI reader and ALWAYS go to the review queue (data/pending.json) until someone at LTA approves them. Add a source by copying an entry. 'status: needs_check' means the address or reader has not yet been confirmed against the live site.",
+  "sources": [
+    { "id": "calgary-council", "name": "City of Calgary council and committee meetings", "kind": "escribe", "url": "https://pub-calgary.escribemeetings.com", "level": "municipal", "region": "Calgary", "type": "council", "status": "needs_check" },
+    { "id": "edmonton-council", "name": "City of Edmonton council and committee meetings", "kind": "escribe", "url": "https://pub-edmonton.escribemeetings.com", "level": "municipal", "region": "Edmonton", "type": "council", "status": "needs_check" },
+
+    { "id": "ucp-events", "name": "United Conservative Party events", "kind": "wp_tribe", "url": "https://www.unitedconservative.ca", "level": "party", "jurisdiction": "provincial", "party": "ucp", "type": "other", "status": "needs_check", "fallback": "ai_page", "page": "https://www.unitedconservative.ca/events" },
+    { "id": "abndp-events", "name": "Alberta NDP events", "kind": "ai_page", "url": "https://www.albertandp.ca/events", "level": "party", "jurisdiction": "provincial", "party": "ab-ndp" },
+    { "id": "tory-site", "name": "Progressive Tory Party of Alberta", "kind": "ai_page", "url": "https://www.albertatory.com", "level": "party", "jurisdiction": "provincial", "party": "tory" },
+    { "id": "rpa-site", "name": "Republican Party of Alberta news", "kind": "ai_page", "url": "https://www.albertarepublicans.com", "level": "party", "jurisdiction": "provincial", "party": "rpa" },
+    { "id": "wlc-site", "name": "Wildrose Loyalty Coalition", "kind": "ai_page", "url": "https://www.wildroseloyaltycoalition.com", "level": "party", "jurisdiction": "provincial", "party": "wlc" },
+    { "id": "gpa-site", "name": "Green Party of Alberta", "kind": "ai_page", "url": "https://www.greenpartyofalberta.ca", "level": "party", "jurisdiction": "provincial", "party": "gpa" },
+    { "id": "lib-site", "name": "Alberta Liberal Party", "kind": "ai_page", "url": "https://www.albertaliberal.com", "level": "party", "jurisdiction": "provincial", "party": "ab-lib" },
+
+    { "id": "elections-ab-home", "name": "Elections Alberta home page (by-elections, referendums)", "kind": "ai_page", "url": "https://www.elections.ab.ca/", "level": "provincial" },
+    { "id": "elections-ab-news", "name": "Elections Alberta news releases", "kind": "ai_page", "url": "https://www.elections.ab.ca/resources/media/news-releases/", "level": "provincial" },
+    { "id": "elections-ab-parties", "name": "Elections Alberta registered parties (leaders, new parties)", "kind": "ai_page", "url": "https://www.elections.ab.ca/political-participants/parties/", "level": "provincial", "purpose": "parties" },
+    { "id": "elections-ca-home", "name": "Elections Canada home page (federal by-elections)", "kind": "ai_page", "url": "https://www.elections.ca/home.aspx", "level": "federal" },
+
+    { "id": "news-ws-alberta", "name": "Western Standard, Alberta", "kind": "ai_news", "url": "https://www.westernstandard.news/alberta", "status": "needs_check" },
+    { "id": "news-cbc-calgary", "name": "CBC Calgary", "kind": "ai_news", "url": "https://www.cbc.ca/news/canada/calgary", "status": "needs_check" },
+    { "id": "news-cbc-edmonton", "name": "CBC Edmonton", "kind": "ai_news", "url": "https://www.cbc.ca/news/canada/edmonton", "status": "needs_check" },
+    { "id": "news-daveberta", "name": "Daveberta (Alberta politics newsletter)", "kind": "ai_news", "url": "https://daveberta.substack.com", "status": "needs_check" }
+  ]
+}

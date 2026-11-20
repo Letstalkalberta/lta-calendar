@@ -1,0 +1,81 @@
+{
+  "checked": "2026-11-19",
+  "note": "Provincial party names, leaders and websites are as listed on Elections Alberta's Registered Political Parties page (checked November 19, 2026). Governance documents link to the party's own published copy. Where no copy could be found, the entry says so; nothing is guessed.",
+  "parties": [
+    {
+      "id": "ucp", "name": "United Conservative Party of Alberta", "short": "UCP", "level": "provincial",
+      "leader": "Danielle Smith", "website": "https://www.unitedconservative.ca",
+      "events_page": "https://www.unitedconservative.ca/events",
+      "docs": [
+        { "title": "United Conservative Association Bylaws (as passed at the 2023 AGM)", "url": "https://www.unitedconservative.ca/wp-content/uploads/United-Conservative-Party-Bylaws-as-passed-at-2023-AGM-submitted-to-Registrar-4156-8176-9038-v.-1.pdf", "date": "2023-11-04" },
+        { "title": "Governance Manual (November 2025)", "url": "https://unitedconservative.ca/wp-content/uploads/UCP-Governance-Manual-Nov2025.pdf", "date": "2025-11" },
+        { "title": "Membership Rules (September 2025)", "url": "https://unitedconservative.ca/wp-content/uploads/UCP-Membership-Rules-Sept2025.pdf", "date": "2025-09" }
+      ],
+      "docs_note": "The 2023 bylaws are the most recent consolidated bylaws found on the party's site. Amendments passed at the 2024 or 2025 AGMs may not be reflected; check with the party."
+    },
+    {
+      "id": "ab-ndp", "name": "Alberta New Democratic Party", "short": "Alberta NDP", "level": "provincial",
+      "leader": "Naheed Nenshi", "website": "https://www.albertandp.ca",
+      "events_page": "https://www.albertandp.ca/events",
+      "docs": [
+        { "title": "Constitution of the Alberta New Democratic Party (as amended May 2025)", "url": "https://billtonita.albertandp.ca/constitution-pdf", "date": "2025-05" },
+        { "title": "Alberta NDP Leadership Rules (adopted by Provincial Council January 27, 2024)", "url": "https://albertandp.ca/leadership-rules-pdf", "date": "2024-01-27" },
+        { "title": "Party page with constitution download", "url": "https://www.albertandp.ca/party" }
+      ],
+      "docs_note": "The May 2025 constitution is served from a constituency page on the party's own website."
+    },
+    {
+      "id": "tory", "name": "Progressive Tory Party of Alberta", "short": "Tory", "level": "provincial",
+      "leader": "Peter Guthrie", "website": "https://www.albertatory.com",
+      "docs": [
+        { "title": "Progressive Tory Party of Alberta Bylaws 2026", "url": "https://assets.nationbuilder.com/abparty/pages/5236/attachments/original/1792885440/Progressive_Tory_Party_Bylaws.docx.pdf", "date": "2026" }
+      ]
+    },
+    {
+      "id": "gpa", "name": "Green Party of Alberta", "short": "Green (AB)", "level": "provincial",
+      "leader": "James Anderson", "website": "https://www.greenpartyofalberta.ca",
+      "docs": [
+        { "title": "Constitution and Bylaws (updated 2025)", "url": "https://assets.nationbuilder.com/gpa/pages/281/attachments/original/1754947054/Constitution_and_Bylaws_2025.pdf", "date": "2025" }
+      ]
+    },
+    {
+      "id": "apa", "name": "Advantage Party of Alberta", "short": "Advantage", "level": "provincial",
+      "leader": "Marilyn Burns", "website": "https://albertaadvantageparty.ca",
+      "docs": [
+        { "title": "Constitution (passed April 27, 2024)", "url": "https://albertaadvantageparty.ca/wp-content/uploads/2025/08/1-2024-UPDATED-CONSTITUTION-Document-Ver1-April-27-2024.pdf", "date": "2024-04-27" }
+      ]
+    },
+    { "id": "ab-lib", "name": "Alberta Liberal Party", "short": "Alberta Liberal", "level": "provincial", "leader": "John Roggeveen (interim)", "website": "https://www.albertaliberal.com", "docs": [], "docs_note": "No published constitution found yet. Check the party website or ask the party." },
+    { "id": "rpa", "name": "Republican Party of Alberta", "short": "Republican", "level": "provincial", "leader": "Cameron Davies", "website": "https://www.albertarepublicans.com", "docs": [], "docs_note": "No published constitution found yet. Check the party website or ask the party." },
+    { "id": "tip", "name": "The Independence Party of Alberta", "short": "TIP", "level": "provincial", "leader": "Ron Robertson (interim)", "website": "https://www.tipalberta.org", "docs": [], "docs_note": "No published constitution found yet. Check the party website or ask the party." },
+    { "id": "wlc", "name": "Wildrose Loyalty Coalition", "short": "WLC", "level": "provincial", "leader": "Paul Hinman", "website": "https://www.wildroseloyaltycoalition.com", "docs": [], "docs_note": "No published constitution found yet. Check the party website or ask the party." },
+    { "id": "wipa", "name": "Wildrose Independence Party of Alberta", "short": "WIPA", "level": "provincial", "leader": "Vacant", "website": "https://www.wildrosenation.com", "docs": [], "docs_note": "No published constitution found yet. Check the party website or ask the party." },
+    { "id": "sm", "name": "Solidarity Movement of Alberta", "short": "Solidarity", "level": "provincial", "leader": "Artur Pawlowski", "website": "https://solidaritymovementofalberta.ca", "docs": [], "docs_note": "No published constitution found yet." },
+    { "id": "papa", "name": "Pro-Life Alberta Political Association", "short": "Pro-Life", "level": "provincial", "leader": "Murray Ruhl", "website": "https://www.prolifealberta.com", "docs": [], "docs_note": "No published constitution found yet." },
+    { "id": "cpa", "name": "Communist Party - Alberta", "short": "Communist (AB)", "level": "provincial", "leader": "Naomi Rankin", "website": "https://www.communistparty-alberta.ca", "docs": [], "docs_note": "No published constitution found yet." },
+
+    {
+      "id": "cpc", "name": "Conservative Party of Canada", "short": "CPC", "level": "federal",
+      "leader": "Pierre Poilievre", "website": "https://www.conservative.ca",
+      "docs": [
+        { "title": "Constitution (as amended by the National Convention, January 31, 2026)", "url": "https://cpcassets.conservative.ca/wp-content/uploads/2026/02/27102601/47f659ed94424a5.pdf", "date": "2026-01-31" }
+      ]
+    },
+    {
+      "id": "lpc", "name": "Liberal Party of Canada", "short": "LPC", "level": "federal",
+      "leader": "Mark Carney", "website": "https://liberal.ca",
+      "docs": [
+        { "title": "Constitution (as amended at the National Convention, April 11, 2026)", "url": "https://liberal.ca/wp-content/uploads/sites/292/2026/04/Constitution-Liberal-Party-of-Canada.pdf", "date": "2026-04-11" }
+      ]
+    },
+    {
+      "id": "ndp", "name": "New Democratic Party of Canada", "short": "NDP", "level": "federal",
+      "leader": "Avi Lewis", "website": "https://www.ndp.ca",
+      "docs": [
+        { "title": "Rules Governing Leadership Contest 2026", "url": "https://www.ndp.ca/sites/default/files/2026-leadershipgoverningrules.pdf", "date": "2026" }
+      ],
+      "docs_note": "The party's constitution (effective April 2021, per the 2026 leadership rules) was not found as a direct link on ndp.ca. Under the Alberta NDP constitution, the federal constitution governs matters the Alberta document does not cover."
+    },
+    { "id": "ppc", "name": "People's Party of Canada", "short": "PPC", "level": "federal", "leader": "Maxime Bernier", "website": "https://www.peoplespartyofcanada.ca", "docs": [], "docs_note": "No published constitution found yet." }
+  ]
+}

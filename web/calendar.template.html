@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alberta Political Calendar | Let's Talk Alberta</title>
+</head>
+<body>
+<!-- ===================== LTA POLITICAL CALENDAR — START (paste from here into NationBuilder) ===================== -->
+<div id="lta-cal" class="ltac">
+<style>
+#lta-cal{--blue:#0B2C6E;--red:#C8102E;--gold:#E8A800;--cream:#FDF7EC;--ink:#1d2433;--muted:#5b6474;--line:#e3dccd;--bg:#fff;
+  font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:var(--bg);max-width:1100px;margin:0 auto;line-height:1.45;font-size:16px;box-sizing:border-box}
+#lta-cal *,#lta-cal *::before,#lta-cal *::after{box-sizing:border-box}
+#lta-cal h1,#lta-cal h2,#lta-cal h3{font-family:Georgia,"Times New Roman",serif;color:var(--blue);margin:0;line-height:1.2}
+#lta-cal a{color:var(--blue)}
+#lta-cal button{font:inherit;cursor:pointer}
+#lta-cal .hdr{background:var(--blue);color:#fff;padding:22px 24px 18px;border-bottom:4px solid var(--gold);border-radius:10px 10px 0 0}
+#lta-cal .hdr h1{color:#fff;font-size:28px}
+#lta-cal .hdr p{margin:6px 0 0;color:#dfe6f5;font-size:15px;max-width:720px}
+#lta-cal .hdr .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+#lta-cal .btn{border:1px solid var(--blue);background:#fff;color:var(--blue);padding:8px 14px;border-radius:999px;font-size:14px;font-weight:bold;display:inline-flex;align-items:center;gap:6px;text-decoration:none;line-height:1.2}
+#lta-cal .btn:hover{background:var(--cream)}
+#lta-cal .btn.primary{background:var(--red);border-color:var(--red);color:#fff}
+#lta-cal .btn.primary:hover{background:#a50d26}
+#lta-cal .btn.gold{background:var(--gold);border-color:var(--gold);color:var(--blue)}
+#lta-cal .btn.small{padding:5px 10px;font-size:13px}
+#lta-cal .hdr .btn{border-color:#fff}
+#lta-cal .bar{background:var(--cream);border:1px solid var(--line);border-top:0;padding:14px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+#lta-cal .chips{display:flex;gap:6px;flex-wrap:wrap}
+#lta-cal .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font-size:14px;color:var(--ink)}
+#lta-cal .chip[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:#fff}
+#lta-cal select,#lta-cal input[type=search],#lta-cal input[type=text],#lta-cal input[type=email],#lta-cal input[type=tel],#lta-cal input[type=number],#lta-cal input[type=time],#lta-cal textarea{font:inherit;font-size:14px;border:1px solid #cfc6b3;border-radius:8px;padding:7px 10px;background:#fff;color:var(--ink);max-width:100%}
+#lta-cal label.tog{font-size:14px;display:inline-flex;gap:6px;align-items:center}
+#lta-cal .tabs{display:flex;gap:4px;border-bottom:2px solid var(--line);margin:18px 0 0;padding:0 4px}
+#lta-cal .tab{border:0;background:none;padding:10px 14px;font-weight:bold;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px}
+#lta-cal .tab[aria-selected="true"]{color:var(--blue);border-bottom-color:var(--red)}
+#lta-cal .view{padding:16px 4px}
+#lta-cal .empty{padding:30px;text-align:center;color:var(--muted)}
+#lta-cal .month-h{font-family:Georgia,serif;font-size:19px;color:var(--blue);margin:20px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--line)}
+#lta-cal .ev{display:grid;grid-template-columns:74px 1fr auto;gap:14px;align-items:start;padding:12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:#fff;cursor:pointer;text-align:left;width:100%}
+#lta-cal .ev:hover{border-color:var(--blue);box-shadow:0 2px 8px rgba(11,44,110,.08)}
+#lta-cal .ev.past{opacity:.72}
+#lta-cal .date{background:var(--blue);color:#fff;border-radius:8px;text-align:center;padding:6px 4px;line-height:1.1}
+#lta-cal .date .m{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--gold);font-weight:bold}
+#lta-cal .date .d{font-size:26px;font-family:Georgia,serif}
+#lta-cal .date .y{font-size:11px;color:#c9d3ea}
+#lta-cal .ev h3{font-size:17px;margin-bottom:4px}
+#lta-cal .meta{font-size:14px;color:var(--muted)}
+#lta-cal .tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+#lta-cal .tag{font-size:12px;border-radius:4px;padding:2px 7px;background:#eef1f7;color:var(--blue);font-weight:bold}
+#lta-cal .tag.federal{background:#e8eefb}#lta-cal .tag.provincial{background:#fdf0d2;color:#6b4c00}#lta-cal .tag.municipal{background:#e6f3ea;color:#1f5a33}#lta-cal .tag.party{background:#f3e8ec;color:#7a1023}
+#lta-cal .tag.done{background:#ececec;color:#555}
+#lta-cal .tag.unv{background:#fff4d6;color:#7a5b00}
+#lta-cal .star{border:0;background:none;font-size:22px;color:#c9c0ad;padding:0 4px;line-height:1}
+#lta-cal .star[aria-pressed="true"]{color:var(--gold)}
+/* month grid */
+#lta-cal .mnav{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+#lta-cal .mnav h2{font-size:22px}
+#lta-cal .grid{display:grid;grid-template-columns:repeat(7,1fr);border-top:1px solid var(--line);border-left:1px solid var(--line)}
+#lta-cal .grid .dow{font-size:12px;font-weight:bold;text-transform:uppercase;color:var(--muted);padding:6px;background:var(--cream);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+#lta-cal .cell{min-height:96px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:4px;font-size:12px;background:#fff}
+#lta-cal .cell.out{background:#faf8f3;color:#aaa}
+#lta-cal .cell.today{outline:2px solid var(--gold);outline-offset:-2px}
+#lta-cal .cell .n{font-weight:bold;font-size:12px;margin-bottom:3px}
+#lta-cal .pill{display:block;width:100%;text-align:left;border:0;border-left:3px solid var(--blue);background:#eef1f7;color:var(--ink);font-size:12px;padding:2px 5px;margin-bottom:3px;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#lta-cal .pill.provincial{border-left-color:var(--gold);background:#fdf6e3}#lta-cal .pill.municipal{border-left-color:#2e7d4f;background:#eaf5ee}#lta-cal .pill.party{border-left-color:var(--red);background:#fbeef1}
+/* parties */
+#lta-cal .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+#lta-cal .pcard{border:1px solid var(--line);border-radius:10px;padding:14px;background:#fff}
+#lta-cal .pcard h3{font-size:17px}
+#lta-cal .pcard ul{margin:8px 0 0;padding-left:18px;font-size:14px}
+#lta-cal .note{font-size:13px;color:var(--muted);margin-top:8px}
+/* modal */
+#lta-cal .ovl{position:fixed;inset:0;background:rgba(13,22,44,.55);display:none;align-items:flex-start;justify-content:center;z-index:99999;padding:24px 12px;overflow:auto}
+#lta-cal .ovl.open{display:flex}
+#lta-cal .modal{background:#fff;border-radius:12px;max-width:760px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.3);overflow:hidden}
+#lta-cal .mh{background:var(--blue);color:#fff;padding:18px 20px;border-bottom:4px solid var(--gold);position:relative}
+#lta-cal .mh h2{color:#fff;font-size:23px;padding-right:40px}
+#lta-cal .mh .meta{color:#dfe6f5;margin-top:6px}
+#lta-cal .x{position:absolute;right:12px;top:12px;border:0;background:rgba(255,255,255,.15);color:#fff;font-size:20px;width:34px;height:34px;border-radius:50%}
+#lta-cal .mb{padding:18px 20px}
+#lta-cal .mb h3{font-size:17px;margin:18px 0 6px}
+#lta-cal .mtabs{display:flex;gap:2px;border-bottom:2px solid var(--line);padding:0 14px;background:var(--cream)}
+#lta-cal .actrow{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 6px}
+#lta-cal table.cand{width:100%;border-collapse:collapse;font-size:14px}
+#lta-cal table.cand td,#lta-cal table.cand th{border-bottom:1px solid var(--line);padding:7px 6px;text-align:left}
+#lta-cal .src{background:var(--cream);border-left:4px solid var(--gold);padding:10px 12px;font-size:13px;margin-top:16px}
+#lta-cal .result{background:#eef6ef;border-left:4px solid #2e7d4f;padding:10px 12px;font-size:14px;margin:10px 0}
+#lta-cal .share-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+#lta-cal .share-grid .btn{justify-content:center}
+#lta-cal .copybox{display:flex;gap:6px;margin-top:8px}
+#lta-cal .copybox input{flex:1}
+#lta-cal .ride{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+#lta-cal .ride b{color:var(--blue)}
+#lta-cal .seats{font-size:13px;color:var(--muted)}
+#lta-cal form.f{display:grid;grid-template-columns:1fr 1fr;gap:10px;background:var(--cream);border:1px solid var(--line);border-radius:10px;padding:14px;margin:10px 0}
+#lta-cal form.f label{font-size:13px;font-weight:bold;display:flex;flex-direction:column;gap:4px}
+#lta-cal form.f .full{grid-column:1/-1}
+#lta-cal .warn{background:#fff4d6;border:1px solid #f0d58a;border-radius:8px;padding:8px 10px;font-size:13px;margin:8px 0}
+#lta-cal .ok{background:#eef6ef;border:1px solid #b9dcc2;border-radius:8px;padding:10px;font-size:14px;margin:8px 0;word-break:break-all}
+#lta-cal .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--blue);color:#fff;padding:10px 16px;border-radius:999px;font-size:14px;z-index:100000;display:none}
+#lta-cal .foot{font-size:12px;color:var(--muted);border-top:1px solid var(--line);margin-top:20px;padding:12px 4px}
+@media (max-width:640px){
+  #lta-cal .hdr h1{font-size:23px}
+  #lta-cal .ev{grid-template-columns:60px 1fr;}
+  #lta-cal .ev .star{grid-column:2;justify-self:end}
+  #lta-cal .cell{min-height:60px}
+  #lta-cal .pill{font-size:0;height:6px;padding:0;margin-bottom:2px}
+  #lta-cal form.f{grid-template-columns:1fr}
+}
+</style>
+
+<div class="hdr">
+  <h1>Alberta Political Calendar</h1>
+  <p>Elections, by-elections, council meetings, and party AGMs, conventions and nomination meetings, all in one place. Every event links to where we found it.</p>
+  <div class="acts">
+    <button class="btn gold" data-act="subscribe">📅 Add to my Google Calendar</button>
+    <button class="btn" data-act="share-cal">↗ Share this calendar</button>
+    <button class="btn" data-act="notify">🔔 Get notified</button>
+  </div>
+</div>
+
+<div class="bar" role="group" aria-label="Filters">
+  <div class="chips" id="ltac-levels">
+    <button class="chip" data-level="federal" aria-pressed="true">Federal</button>
+    <button class="chip" data-level="provincial" aria-pressed="true">Provincial</button>
+    <button class="chip" data-level="municipal" aria-pressed="true">Municipal</button>
+    <button class="chip" data-level="party" aria-pressed="true">Party events</button>
+  </div>
+  <select id="ltac-type" aria-label="Event type"><option value="">All event types</option></select>
+  <select id="ltac-party" aria-label="Party"><option value="">All parties</option></select>
+  <input type="search" id="ltac-q" placeholder="Search: town, riding, party…" aria-label="Search">
+  <label class="tog"><input type="checkbox" id="ltac-past"> Show past</label>
+  <label class="tog"><input type="checkbox" id="ltac-starred"> ★ My events</label>
+</div>
+
+<div class="tabs" role="tablist">
+  <button class="tab" role="tab" data-view="list" aria-selected="true">Upcoming</button>
+  <button class="tab" role="tab" data-view="month" aria-selected="false">Month</button>
+  <button class="tab" role="tab" data-view="parties" aria-selected="false">Parties &amp; governance documents</button>
+</div>
+<div class="view" id="ltac-view"></div>
+
+<div class="foot" id="ltac-foot"></div>
+
+<div class="ovl" id="ltac-ovl" role="dialog" aria-modal="true"><div class="modal" id="ltac-modal"></div></div>
+<div class="toast" id="ltac-toast" role="status"></div>
+
+<script>
+(function(){
+"use strict";
+/* ---------- CONFIG: Juanjo edits these three lines ---------- */
+var CONFIG = Object.assign({
+  apiBase: "",            // e.g. "https://calendar-api.letstalkalberta.com"  (leave "" to use the data built into this page)
+  feedBase: "",           // e.g. "https://calendar-api.letstalkalberta.com/feeds"  (calendar subscription feeds)
+  pageUrl: "https://www.letstalkalberta.com/political-calendar"  // the public URL of this page, used in share links
+}, window.LTA_CAL_CONFIG || {});
+/* ----------------------------------------------------------- */
+
+var EMBED_EVENTS = /*__EVENTS__*/{"events":[]};
+var EMBED_PARTIES = /*__PARTIES__*/{"parties":[]};
+
+var root = document.getElementById("lta-cal");
+var $ = function(s,el){return (el||root).querySelector(s);};
+var $$ = function(s,el){return Array.prototype.slice.call((el||root).querySelectorAll(s));};
+var TZ = "America/Regina"; // fixed UTC-6, same as Alberta's year-round time since 2026
+var TYPE_LABEL = {"election":"General election","by-election":"By-election","referendum":"Referendum","agm":"Annual general meeting","convention":"Convention","nomination":"Nomination meeting","council":"Council meeting","board":"Board meeting","committee":"Committee meeting","town-hall":"Town hall","leadership":"Leadership vote","deadline":"Deadline","other":"Other"};
+var LEVEL_LABEL = {"federal":"Federal","provincial":"Provincial","municipal":"Municipal","party":"Party"};
+
+var state = { events:[], parties:{}, partyList:[], view:"list", levels:{federal:1,provincial:1,municipal:1,party:1}, type:"", party:"", q:"", past:false, starred:false, cursor:null, demoRides:{} };
+
+function store(k,v){ try{ if(v===undefined) return JSON.parse(localStorage.getItem("ltac_"+k)||"null"); localStorage.setItem("ltac_"+k, JSON.stringify(v)); }catch(e){ return null; } }
+var stars = store("stars") || {};
+
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+function toast(msg){ var t=$("#ltac-toast"); t.textContent=msg; t.style.display="block"; clearTimeout(toast._t); toast._t=setTimeout(function(){t.style.display="none";},2600); }
+
+/* ---------- dates ---------- */
+function startDate(ev){ return ev.all_day ? new Date(ev.start+"T12:00:00-06:00") : new Date(ev.start); }
+function endDate(ev){ if(ev.end) return ev.all_day? new Date(ev.end+"T12:00:00-06:00") : new Date(ev.end); return startDate(ev); }
+function fmt(d,opts){ return new Intl.DateTimeFormat("en-CA", Object.assign({timeZone:TZ},opts)).format(d); }
+function dayKey(d){ return fmt(d,{year:"numeric",month:"2-digit",day:"2-digit"}); } // YYYY-MM-DD
+function whenText(ev){
+  var s=startDate(ev), e=endDate(ev);
+  var dOpts={weekday:"long",month:"long",day:"numeric",year:"numeric"};
+  if(ev.all_day) return fmt(s,dOpts);
+  var t={hour:"numeric",minute:"2-digit"};
+  if(dayKey(s)===dayKey(e)) return fmt(s,dOpts)+" · "+fmt(s,t)+(ev.end?" – "+fmt(e,t):"")+" Alberta time";
+  return fmt(s,{weekday:"short",month:"short",day:"numeric"})+", "+fmt(s,t)+" to "+fmt(e,{weekday:"short",month:"short",day:"numeric",year:"numeric"})+" (Alberta time)";
+}
+function isPast(ev){ return endDate(ev).getTime() < Date.now() - (ev.all_day? 86400000:0); }
+function utcStamp(d){ return d.toISOString().replace(/[-:]/g,"").replace(/\.\d{3}/,""); }
+function ymd(dstr,add){ var d=new Date(dstr+"T12:00:00Z"); d.setUTCDate(d.getUTCDate()+(add||0)); return d.toISOString().slice(0,10).replace(/-/g,""); }
+
+/* ---------- links ---------- */
+function eventUrl(ev){ return CONFIG.apiBase ? CONFIG.apiBase.replace(/\/$/,"")+"/e/"+encodeURIComponent(ev.id) : CONFIG.pageUrl+"#event-"+ev.id; }
+function locText(ev){ var l=ev.location||{}; return [l.name,l.address].filter(Boolean).join(", "); }
+function gcalLink(ev){
+  var dates = ev.all_day ? ymd(ev.start)+"/"+ymd(ev.end||ev.start,1) : utcStamp(startDate(ev))+"/"+utcStamp(ev.end?endDate(ev):new Date(startDate(ev).getTime()+3600000));
+  var details=(ev.description||"")+"\n\nSource: "+(ev.source&&ev.source.url||"")+"\nDetails, candidates and rides: "+eventUrl(ev)+"\n\nFrom the Let's Talk Alberta political calendar.";
+  return "https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent(ev.title)+"&dates="+dates+"&details="+encodeURIComponent(details)+"&location="+encodeURIComponent(locText(ev));
+}
+function icsFor(evs,name){
+  function fold(s){ return s.replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\n/g,"\\n"); }
+  var L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Let's Talk Alberta//Political Calendar//EN","CALSCALE:GREGORIAN","X-WR-CALNAME:"+fold(name||"LTA Political Calendar")];
+  evs.forEach(function(ev){
+    L.push("BEGIN:VEVENT","UID:"+ev.id+"@letstalkalberta.com","DTSTAMP:"+utcStamp(new Date()));
+    if(ev.all_day){ L.push("DTSTART;VALUE=DATE:"+ymd(ev.start),"DTEND;VALUE=DATE:"+ymd(ev.end||ev.start,1)); }
+    else { L.push("DTSTART:"+utcStamp(startDate(ev)),"DTEND:"+utcStamp(ev.end?endDate(ev):new Date(startDate(ev).getTime()+3600000))); }
+    L.push("SUMMARY:"+fold(ev.title),"LOCATION:"+fold(locText(ev)),"DESCRIPTION:"+fold((ev.description||"")+"\n\nSource: "+(ev.source&&ev.source.url||"")+"\n"+eventUrl(ev)),"URL:"+eventUrl(ev));
+    L.push("BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:"+fold(ev.title),"TRIGGER:-P1D","END:VALARM","END:VEVENT");
+  });
+  L.push("END:VCALENDAR"); return L.join("\r\n");
+}
+function download(name,text){
+  try{ var a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([text],{type:"text/calendar"})); a.download=name; document.body.appendChild(a); a.click(); a.remove(); }
+  catch(e){ toast("Download blocked here. Use the Google Calendar button instead."); }
+}
+function copy(text){ try{ navigator.clipboard.writeText(text).then(function(){toast("Copied");},function(){toast("Select the text and copy it");}); }catch(e){ toast("Select the text and copy it"); } }
+
+/* ---------- data ---------- */
+function load(){
+  if(!CONFIG.apiBase){ init(EMBED_EVENTS, EMBED_PARTIES); return; }
+  var b=CONFIG.apiBase.replace(/\/$/,"");
+  Promise.all([fetch(b+"/api/events").then(function(r){return r.json();}), fetch(b+"/api/parties").then(function(r){return r.json();})])
+    .then(function(r){ init(r[0], r[1]); })
+    .catch(function(){ init(EMBED_EVENTS, EMBED_PARTIES); toast("Showing saved copy of the calendar"); });
+}
+function init(evData, pData){
+  state.events = (evData.events||[]).filter(function(e){ return e.verified!==false; }).sort(function(a,b){ return startDate(a)-startDate(b); });
+  state.partyList = pData.parties||[];
+  state.partyList.forEach(function(p){ state.parties[p.id]=p; });
+  var types={}; state.events.forEach(function(e){ types[e.type]=1; });
+  $("#ltac-type").innerHTML='<option value="">All event types</option>'+Object.keys(types).sort().map(function(t){return '<option value="'+esc(t)+'">'+esc(TYPE_LABEL[t]||t)+'</option>';}).join("");
+  var prov=state.partyList.filter(function(p){return p.level==="provincial";}), fed=state.partyList.filter(function(p){return p.level==="federal";});
+  $("#ltac-party").innerHTML='<option value="">All parties</option><optgroup label="Provincial">'+prov.map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>';}).join("")+'</optgroup><optgroup label="Federal">'+fed.map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>';}).join("")+'</optgroup>';
+  var gen = evData.generated ? new Date(evData.generated) : null;
+  $("#ltac-foot").innerHTML = "Times are Alberta time (UTC−6, year-round). "+(gen? "Calendar last updated "+esc(fmt(gen,{month:"long",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"}).replace(/\.$/,""))+". ":"")+
+    "Let's Talk Alberta lists events from every party and level of government and does not endorse any party or candidate. Spot an error or a missing event? Email <a href=\"mailto:letstalkalberta@gmail.com\">letstalkalberta@gmail.com</a>.";
+  state.cursor = new Date();
+  render(); route();
+}
+
+/* ---------- filtering ---------- */
+function visible(){
+  var q=state.q.toLowerCase();
+  return state.events.filter(function(e){
+    if(!state.levels[e.level]) return false;
+    if(state.type && e.type!==state.type) return false;
+    if(state.party){ var inC=(e.candidates||[]).some(function(c){return c.party===state.party;}); if(e.party!==state.party && !inC) return false; }
+    if(!state.past && isPast(e) && state.view==="list") return false;
+    if(state.starred && !stars[e.id]) return false;
+    if(q){ var p=state.parties[e.party]; var hay=[e.title,e.region,locText(e),e.description,p&&p.name,p&&p.short].join(" ").toLowerCase(); if(hay.indexOf(q)<0) return false; }
+    return true;
+  });
+}
+function tagsFor(e){
+  var p=state.parties[e.party];
+  return '<span class="tag '+esc(e.level)+'">'+esc(LEVEL_LABEL[e.level]||e.level)+'</span><span class="tag">'+esc(TYPE_LABEL[e.type]||e.type)+'</span>'+(p?'<span class="tag">'+esc(p.short)+'</span>':'')+(isPast(e)||e.status==="completed"?'<span class="tag done">Past</span>':'')+(e.verified===false?'<span class="tag unv">Unconfirmed</span>':'');
+}
+
+/* ---------- views ---------- */
+function render(){
+  $$(".tab").forEach(function(t){ t.setAttribute("aria-selected", t.dataset.view===state.view?"true":"false"); });
+  var v=$("#ltac-view");
+  if(state.view==="parties") return renderParties(v);
+  if(state.view==="month") return renderMonth(v);
+  var list=visible();
+  if(!list.length){ v.innerHTML='<div class="empty">No events match these filters.'+(state.past?'':' Try ticking “Show past”.')+'</div>'; return; }
+  var html="", lastM="";
+  list.forEach(function(e){
+    var s=startDate(e), m=fmt(s,{month:"long",year:"numeric"});
+    if(m!==lastM){ html+='<div class="month-h">'+esc(m)+'</div>'; lastM=m; }
+    html+='<div class="ev'+(isPast(e)?' past':'')+'" role="button" tabindex="0" data-open="'+esc(e.id)+'">'+
+      '<div class="date"><div class="m">'+esc(fmt(s,{month:"short"}))+'</div><div class="d">'+esc(fmt(s,{day:"numeric"}))+'</div><div class="y">'+esc(fmt(s,{year:"numeric"}))+'</div></div>'+
+      '<div><h3>'+esc(e.title)+'</h3><div class="meta">'+esc(whenText(e))+'</div><div class="meta">'+esc(locText(e))+'</div><div class="tags">'+tagsFor(e)+'</div></div>'+
+      '<button class="star" data-star="'+esc(e.id)+'" aria-pressed="'+(stars[e.id]?"true":"false")+'" title="Add to My events" aria-label="Add to My events">★</button></div>';
+  });
+  v.innerHTML=html;
+}
+function renderMonth(v){
+  var c=state.cursor, y=+fmt(c,{year:"numeric"}), m=+fmt(c,{month:"numeric"})-1;
+  var first=new Date(Date.UTC(y,m,1,12)), startDow=first.getUTCDay(), days=new Date(Date.UTC(y,m+1,0,12)).getUTCDate();
+  var byDay={}; visible().forEach(function(e){
+    var s=startDate(e), en=endDate(e);
+    for(var t=new Date(s.getTime()); t<=en || dayKey(t)===dayKey(en); t=new Date(t.getTime()+86400000)){ var k=dayKey(t); (byDay[k]=byDay[k]||[]).push(e); if(dayKey(t)===dayKey(en)) break; }
+  });
+  var today=dayKey(new Date());
+  var h='<div class="mnav"><button class="btn small" data-mnav="-1">‹ Prev</button><h2>'+esc(fmt(first,{month:"long",year:"numeric"}))+'</h2><button class="btn small" data-mnav="1">Next ›</button></div><div class="grid">';
+  ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(function(d){ h+='<div class="dow">'+d+'</div>'; });
+  for(var i=0;i<42;i++){
+    var d=new Date(Date.UTC(y,m,1-startDow+i,12)), k=d.toISOString().slice(0,10), out=d.getUTCMonth()!==m;
+    if(i>=35 && out && d.getUTCDate()<8) break;
+    h+='<div class="cell'+(out?' out':'')+(k===today?' today':'')+'"><div class="n">'+d.getUTCDate()+'</div>'+(byDay[k]||[]).map(function(e){return '<button class="pill '+esc(e.level)+'" data-open="'+esc(e.id)+'" title="'+esc(e.title)+'">'+esc(e.title)+'</button>';}).join("")+'</div>';
+  }
+  v.innerHTML=h+'</div><p class="note">Tip: tap an event for details, candidates, governance documents, sharing and rides.</p>';
+}
+function docsList(p){
+  if(!p) return "";
+  var h=(p.docs||[]).length? '<ul>'+p.docs.map(function(d){return '<li><a href="'+esc(d.url)+'" target="_blank" rel="noopener">'+esc(d.title)+'</a></li>';}).join("")+'</ul>' : '';
+  if(p.docs_note) h+='<div class="note">'+esc(p.docs_note)+'</div>';
+  return h;
+}
+function renderParties(v){
+  function card(p){ var n=state.events.filter(function(e){return e.party===p.id && !isPast(e);}).length;
+    return '<div class="pcard"><h3>'+esc(p.name)+'</h3><div class="meta">Leader: '+esc(p.leader||"—")+' · <a href="'+esc(p.website)+'" target="_blank" rel="noopener">Website</a></div>'+
+      '<div class="meta" style="margin-top:6px"><b>Governance documents</b></div>'+docsList(p)+
+      '<div class="actrow" style="margin-top:10px"><button class="btn small" data-pfilter="'+esc(p.id)+'">'+n+' upcoming event'+(n===1?'':'s')+'</button></div></div>'; }
+  var prov=state.partyList.filter(function(p){return p.level==="provincial";}), fed=state.partyList.filter(function(p){return p.level==="federal";});
+  v.innerHTML='<h2 style="font-size:20px;margin-bottom:10px">Provincial parties registered with Elections Alberta</h2><div class="pgrid">'+prov.map(card).join("")+'</div>'+
+    '<h2 style="font-size:20px;margin:24px 0 10px">Federal parties</h2><div class="pgrid">'+fed.map(card).join("")+'</div>'+
+    '<p class="note">Party names, leaders and websites follow Elections Alberta’s registered parties list. Documents link to each party’s own published copy; where we could not find one, we say so.</p>';
+}
+
+/* ---------- modal ---------- */
+function openModal(html){ $("#ltac-modal").innerHTML=html; $("#ltac-ovl").classList.add("open"); var x=$(".x",$("#ltac-modal")); if(x) x.focus(); }
+function closeModal(){ $("#ltac-ovl").classList.remove("open"); if(/^#event-/.test(location.hash)){ try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){} } }
+function shareText(ev){ return ev ? ev.title+" — "+whenText(ev)+(locText(ev)?" at "+locText(ev):"")+". Who's coming with me?" : "Every election, council meeting and party AGM in Alberta, in one calendar. Add it to your Google Calendar:"; }
+function shareBlock(ev){
+  var url=ev?eventUrl(ev):CONFIG.pageUrl, txt=shareText(ev), u=encodeURIComponent(url), t=encodeURIComponent(txt);
+  var canNative = !!navigator.share;
+  return '<div class="share-grid">'+
+    (canNative?'<button class="btn primary" data-native-share>Share…</button>':'')+
+    '<a class="btn" href="https://www.facebook.com/sharer/sharer.php?u='+u+'" target="_blank" rel="noopener">Facebook</a>'+
+    '<a class="btn" href="https://twitter.com/intent/tweet?text='+t+'&url='+u+'" target="_blank" rel="noopener">X</a>'+
+    '<a class="btn" href="https://wa.me/?text='+encodeURIComponent(txt+" "+url)+'" target="_blank" rel="noopener">WhatsApp</a>'+
+    '<a class="btn" href="sms:?&body='+encodeURIComponent(txt+" "+url)+'">Text message</a>'+
+    '<a class="btn" href="mailto:?subject='+encodeURIComponent(ev?ev.title:"Alberta Political Calendar")+'&body='+encodeURIComponent(txt+"\n\n"+url+"\n\nAdd it to your calendar and grab a seat in a carpool on the event page.")+'">Email</a>'+
+    '</div><div class="copybox"><input type="text" readonly value="'+esc(url)+'" aria-label="Link"><button class="btn small" data-copy="'+esc(url)+'">Copy link</button></div>'+
+    '<div class="copybox"><input type="text" readonly value="'+esc(txt+" "+url)+'" aria-label="Invite message"><button class="btn small" data-copy="'+esc(txt+" "+url)+'">Copy invite</button></div>';
+}
+function openEvent(id, tab){
+  var ev=state.events.filter(function(e){return e.id===id;})[0]; if(!ev) return;
+  try{ if(location.hash!=="#event-"+id) history.replaceState(null,"","#event-"+id); }catch(e){}
+  var p=state.parties[ev.party];
+  var h='<div class="mh"><button class="x" data-close aria-label="Close">×</button><h2>'+esc(ev.title)+'</h2><div class="meta">'+esc(whenText(ev))+'</div><div class="meta">'+esc(locText(ev))+'</div><div class="tags" style="margin-top:8px">'+tagsFor(ev)+'</div></div>'+
+    '<div class="mtabs" role="tablist">'+["details","candidates","share","rides"].map(function(t){return '<button class="tab" data-mtab="'+t+'" aria-selected="'+(t===(tab||"details"))+'">'+({details:"Details",candidates:"Candidates & documents",share:"Share & invite",rides:"Rides"}[t])+'</button>';}).join("")+'</div>'+
+    '<div class="mb" id="ltac-mb"></div>';
+  openModal(h); $("#ltac-modal").dataset.ev=id; showTab(tab||"details");
+}
+function showTab(t){
+  var id=$("#ltac-modal").dataset.ev, ev=state.events.filter(function(e){return e.id===id;})[0], p=state.parties[ev.party], b=$("#ltac-mb");
+  $$(".mtabs .tab").forEach(function(x){ x.setAttribute("aria-selected", x.dataset.mtab===t?"true":"false"); });
+  if(t==="details"){
+    b.innerHTML='<div class="actrow"><a class="btn primary" href="'+esc(gcalLink(ev))+'" target="_blank" rel="noopener">＋ Google Calendar</a><button class="btn" data-ics="'+esc(ev.id)+'">Apple / Outlook (.ics)</button><button class="btn" data-mtab="share">↗ Share</button><button class="btn" data-mtab="rides">🚗 Rides</button><button class="btn" data-star="'+esc(ev.id)+'" aria-pressed="'+(stars[ev.id]?"true":"false")+'">'+(stars[ev.id]?"★ In My events":"☆ Add to My events")+'</button></div>'+
+      (ev.result?'<div class="result"><b>Result:</b> '+esc(ev.result)+'</div>':'')+
+      '<p>'+esc(ev.description||"")+'</p>'+
+      ((ev.links||[]).length?'<h3>Links</h3><ul>'+ev.links.map(function(l){return '<li><a href="'+esc(l.url)+'" target="_blank" rel="noopener">'+esc(l.label)+'</a></li>';}).join("")+'</ul>':'')+
+      (p?'<h3>'+esc(p.name)+'</h3><div class="meta">Leader: '+esc(p.leader||"—")+' · <a href="'+esc(p.website)+'" target="_blank" rel="noopener">Website</a></div>'+docsList(p):'')+
+      '<div class="src"><b>Source:</b> <a href="'+esc(ev.source&&ev.source.url)+'" target="_blank" rel="noopener">'+esc(ev.source&&ev.source.name)+'</a> · '+(ev.source&&ev.source.kind==="primary"?"Primary source":"Secondary source")+(ev.source&&ev.source.checked?' · checked '+esc(ev.source.checked):'')+(ev.verified===false?'<br><b>Unconfirmed:</b> found automatically and not yet checked by our team.':'')+'</div>';
+  } else if(t==="candidates"){
+    var cs=ev.candidates||[], parties={};
+    cs.forEach(function(c){ if(c.party) parties[c.party]=1; }); if(ev.party) parties[ev.party]=1;
+    b.innerHTML=(cs.length?'<table class="cand"><thead><tr><th>Candidate</th><th>Party</th><th>Status</th></tr></thead><tbody>'+cs.map(function(c){var cp=state.parties[c.party];return '<tr><td>'+esc(c.name)+'</td><td>'+(cp?'<a href="#" data-pdocs="'+esc(cp.id)+'">'+esc(cp.name)+'</a>':esc(c.affiliation||"Independent"))+'</td><td>'+esc(c.status||"")+'</td></tr>';}).join("")+'</tbody></table>':'<p class="meta">No candidates listed for this event yet.</p>')+
+      (ev.candidates_note?'<p class="note">'+esc(ev.candidates_note)+'</p>':'')+
+      (Object.keys(parties).length?'<h3>Party governance documents</h3>'+Object.keys(parties).map(function(pid){var pp=state.parties[pid]; return pp?'<div style="margin-bottom:12px"><b>'+esc(pp.name)+'</b>'+docsList(pp)+'</div>':'';}).join(""):'<p class="note">This event is not tied to one party. See the <a href="#" data-goto-parties>Parties &amp; governance documents</a> tab for every party.</p>');
+  } else if(t==="share"){
+    b.innerHTML='<p>Politics is better in person. Send this to the people you would bring along.</p>'+shareBlock(ev)+
+      '<h3>Bring more people</h3><p class="meta">Driving? Offer your empty seats on the <a href="#" data-mtab="rides">Rides</a> tab. Need a lift? Ask there too.</p>';
+  } else if(t==="rides"){ renderRides(ev,b); }
+}
+
+/* ---------- rides ---------- */
+function api(path,opts){ return fetch(CONFIG.apiBase.replace(/\/$/,"")+path, Object.assign({headers:{"Content-Type":"application/json"}},opts||{})).then(function(r){ return r.json().then(function(j){ if(!r.ok) throw new Error(j.error||"Request failed"); return j; }); }); }
+function demoStore(id){ return state.demoRides[id]=state.demoRides[id]||{offers:[],needs:[]}; }
+function getRides(id){ return CONFIG.apiBase ? api("/api/rides?event="+encodeURIComponent(id)) : Promise.resolve(JSON.parse(JSON.stringify(demoStore(id)))); }
+function renderRides(ev,b){
+  if(isPast(ev)){ b.innerHTML='<p class="meta">This event has passed, so the ride board is closed.</p>'; return; }
+  b.innerHTML='<p class="meta">Loading rides…</p>';
+  getRides(ev.id).then(function(r){
+    var open=r.offers.reduce(function(a,o){return a+Math.max(0,o.seats-o.taken);},0);
+    var h=(CONFIG.apiBase?'':'<div class="warn"><b>Preview mode:</b> rides entered here are not saved. Once the calendar server is connected, rides are stored and drivers get a private link to manage requests.</div>')+
+      '<p><b>'+r.offers.length+'</b> ride'+(r.offers.length===1?'':'s')+' offered · <b>'+open+'</b> open seat'+(open===1?'':'s')+' · <b>'+r.needs.length+'</b> looking for a ride</p>'+
+      '<div class="actrow"><button class="btn primary" data-rform="offer">🚗 Offer a ride</button><button class="btn" data-rform="need">🙋 I need a ride</button></div><div id="ltac-rform"></div>'+
+      '<h3>Rides offered</h3>'+(r.offers.length? r.offers.map(function(o){var left=o.seats-o.taken; return '<div class="ride"><div><b>'+esc(o.name)+'</b> from <b>'+esc(o.from)+'</b>'+(o.depart?' · leaves '+esc(o.depart):'')+'<div class="seats">'+left+' of '+o.seats+' seats open'+(o.notes?' · '+esc(o.notes):'')+'</div></div>'+(left>0?'<button class="btn small" data-rreq="'+esc(o.id)+'">Request a seat</button>':'<span class="tag done">Full</span>')+'</div>';}).join("") : '<p class="meta">No rides offered yet. Be the first.</p>')+
+      '<h3>Looking for a ride</h3>'+(r.needs.length? r.needs.map(function(n){return '<div class="ride"><div><b>'+esc(n.name)+'</b> from <b>'+esc(n.from)+'</b><div class="seats">'+n.seats+' seat'+(n.seats===1?'':'s')+' needed'+(n.notes?' · '+esc(n.notes):'')+'</div></div><button class="btn small" data-rform="offer" data-from="'+esc(n.from)+'">I can drive</button></div>';}).join("") : '<p class="meta">Nobody has asked yet.</p>')+
+      '<p class="note">Contact details are never shown on this page. A driver sees a rider’s contact only after the rider asks for a seat, and only through the driver’s private link. Let’s Talk Alberta does not screen drivers or riders: meet in a public place, share your plans with someone you trust, and use your own judgement.</p>';
+    b.innerHTML=h;
+  }).catch(function(e){ b.innerHTML='<div class="warn">Could not load rides: '+esc(e.message)+'</div>'; });
+}
+function rideForm(kind,ev,offerId,prefFrom){
+  var f=$("#ltac-rform");
+  var common='<label>First name<input name="name" required maxlength="40"></label><label>Email or phone (private)<input name="contact" required maxlength="80"></label>';
+  if(kind==="offer") f.innerHTML='<form class="f" data-kind="offer">'+common+'<label>Leaving from (town)<input name="from" required maxlength="60" value="'+esc(prefFrom||"")+'"></label><label>Leaving at<input name="depart" placeholder="e.g. 4:30 PM" maxlength="30"></label><label>Seats available<input name="seats" type="number" min="1" max="12" value="3" required></label><label class="full">Notes (optional)<input name="notes" maxlength="140" placeholder="e.g. Can pick up along Hwy 2"></label><label class="full" style="flex-direction:row;font-weight:normal"><input type="checkbox" required> I understand my contact details go only to riders I hear from, and that LTA does not screen riders.</label><div class="full"><button class="btn primary">Post my ride</button></div></form>';
+  if(kind==="need") f.innerHTML='<form class="f" data-kind="need">'+common+'<label>Coming from (town)<input name="from" required maxlength="60"></label><label>Seats needed<input name="seats" type="number" min="1" max="8" value="1" required></label><label class="full">Notes (optional)<input name="notes" maxlength="140"></label><div class="full"><button class="btn primary">Post my request</button></div></form>';
+  if(kind==="req") f.innerHTML='<form class="f" data-kind="req" data-offer="'+esc(offerId)+'">'+common+'<label>Seats needed<input name="seats" type="number" min="1" max="8" value="1" required></label><label>Pickup note (optional)<input name="notes" maxlength="140"></label><div class="full"><button class="btn primary">Send my request to the driver</button></div></form>';
+  f.scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+function submitRide(form){
+  var id=$("#ltac-modal").dataset.ev, kind=form.dataset.kind, d={}; $$("input",form).forEach(function(i){ if(i.name) d[i.name]=i.value.trim(); });
+  d.seats=parseInt(d.seats,10)||1; d.event=id;
+  var p;
+  if(CONFIG.apiBase){
+    p = kind==="offer"? api("/api/rides/offers",{method:"POST",body:JSON.stringify(d)}) : kind==="need"? api("/api/rides/needs",{method:"POST",body:JSON.stringify(d)}) : api("/api/rides/offers/"+encodeURIComponent(form.dataset.offer)+"/requests",{method:"POST",body:JSON.stringify(d)});
+  } else {
+    var s=demoStore(id), rid=Math.random().toString(36).slice(2,10);
+    if(kind==="offer") s.offers.push({id:rid,name:d.name,from:d.from,depart:d.depart,seats:d.seats,taken:0,notes:d.notes});
+    if(kind==="need") s.needs.push({id:rid,name:d.name,from:d.from,seats:d.seats,notes:d.notes});
+    if(kind==="req"){ s.offers.forEach(function(o){ if(o.id===form.dataset.offer) o.taken=Math.min(o.seats,o.taken+d.seats); }); }
+    p=Promise.resolve(kind==="offer"?{manage_url:"(private manage link appears here once the server is connected)"}:{});
+  }
+  p.then(function(res){
+    var ev=state.events.filter(function(e){return e.id===id;})[0]; renderRides(ev,$("#ltac-mb"));
+    setTimeout(function(){
+      var msg = kind==="offer" ? '<div class="ok"><b>Your ride is posted.</b> Save this private link. It shows who asks for a seat and lets you confirm or remove your ride:<br><a href="'+esc(res.manage_url)+'">'+esc(res.manage_url)+'</a></div>'
+        : kind==="need" ? '<div class="ok"><b>Your request is posted.</b> Drivers will see your first name and town. When you ask a driver for a seat, they get your contact.</div>'
+        : '<div class="ok"><b>Request sent.</b> The driver will contact you.</div>';
+      var f=$("#ltac-rform"); if(f) f.innerHTML=msg;
+    },50);
+    toast("Thanks for bringing people along");
+  }).catch(function(e){ toast(e.message); });
+}
+
+/* ---------- subscribe / notify ---------- */
+function feedList(){
+  var f=[{id:"all",label:"Everything"},{id:"provincial",label:"Provincial elections & votes"},{id:"federal",label:"Federal elections & votes"},{id:"municipal",label:"Municipal elections & council meetings"},{id:"party",label:"All party events"}];
+  state.partyList.forEach(function(p){ f.push({id:"party-"+p.id,label:p.name+" events"}); });
+  return f;
+}
+function openSubscribe(){
+  var opts=feedList().map(function(f){return '<option value="'+esc(f.id)+'">'+esc(f.label)+'</option>';}).join("");
+  openModal('<div class="mh"><button class="x" data-close aria-label="Close">×</button><h2>Add this calendar to your phone</h2><div class="meta">Subscribe once. New events show up on their own.</div></div><div class="mb">'+
+    '<label style="font-weight:bold;font-size:14px">Which events?<br><select id="ltac-feed" style="margin-top:6px;min-width:280px">'+opts+'</select></label><div id="ltac-feedout" style="margin-top:12px"></div>'+
+    '<h3>Getting reminders</h3><p class="meta">Google Calendar uses your default notification settings for subscribed calendars. Open Google Calendar on a computer, find “LTA Political Calendar” under Other calendars, choose Settings, and set the notifications you want. Google refreshes subscribed calendars on its own schedule, often within a day, so brand-new events can take a while to appear.</p>'+
+    '<h3>One event at a time</h3><p class="meta">Every event also has its own “＋ Google Calendar” button.</p></div>');
+  feedOut();
+}
+function feedOut(){
+  var id=$("#ltac-feed").value, out=$("#ltac-feedout");
+  if(!CONFIG.feedBase){ out.innerHTML='<div class="warn">Calendar feeds go live when the calendar server is connected. Until then, use the “＋ Google Calendar” button on each event, or download all events below.</div><button class="btn" data-ics-all>Download all upcoming events (.ics)</button>'; return; }
+  var https=CONFIG.feedBase.replace(/\/$/,"")+"/"+id+".ics", webcal=https.replace(/^https?:/,"webcal:");
+  out.innerHTML='<div class="actrow"><a class="btn primary" href="https://calendar.google.com/calendar/r?cid='+encodeURIComponent(webcal)+'" target="_blank" rel="noopener">Add to Google Calendar</a><a class="btn" href="'+esc(webcal)+'">Apple Calendar / Outlook</a></div><div class="copybox"><input type="text" readonly value="'+esc(https)+'"><button class="btn small" data-copy="'+esc(https)+'">Copy feed address</button></div>';
+}
+function openNotify(){
+  openModal('<div class="mh"><button class="x" data-close aria-label="Close">×</button><h2>Get notified</h2></div><div class="mb">'+
+    '<p><b>Today:</b> subscribe in Google Calendar and set reminders, or star events (★) to build your own list under “My events”.</p>'+
+    '<p><b>Coming in the Let’s Talk Alberta app:</b> pick the parties, places and kinds of events you care about, and get a push notification when a new one is posted and a reminder before it starts.</p>'+
+    '<div class="actrow"><button class="btn primary" data-act="subscribe">📅 Subscribe now</button><a class="btn" href="https://www.letstalkalberta.com">Join the LTA list</a></div></div>');
+}
+
+/* ---------- events ---------- */
+root.addEventListener("click",function(e){
+  var t=e.target.closest("[data-open],[data-star],[data-level],[data-view],[data-mtab],[data-mnav],[data-close],[data-act],[data-copy],[data-ics],[data-ics-all],[data-native-share],[data-rform],[data-rreq],[data-pfilter],[data-pdocs],[data-goto-parties]");
+  if(!t) { if(e.target.id==="ltac-ovl") closeModal(); return; }
+  var d=t.dataset;
+  if(d.star){ e.stopPropagation(); stars[d.star]=!stars[d.star]; if(!stars[d.star]) delete stars[d.star]; store("stars",stars); if($("#ltac-ovl").classList.contains("open")&&$("#ltac-modal").dataset.ev===d.star) showTab("details"); render(); toast(stars[d.star]?"Added to My events":"Removed from My events"); return; }
+  if(d.open){ openEvent(d.open); return; }
+  if(d.level){ state.levels[d.level]=state.levels[d.level]?0:1; t.setAttribute("aria-pressed",state.levels[d.level]?"true":"false"); render(); return; }
+  if(d.view){ state.view=d.view; render(); return; }
+  if(d.mtab){ e.preventDefault(); showTab(d.mtab); return; }
+  if(d.mnav){ var c=state.cursor; state.cursor=new Date(Date.UTC(+fmt(c,{year:"numeric"}), +fmt(c,{month:"numeric"})-1+(+d.mnav), 15, 12)); render(); return; }
+  if(d.close!==undefined){ closeModal(); return; }
+  if(d.act==="subscribe"){ openSubscribe(); return; }
+  if(d.act==="notify"){ openNotify(); return; }
+  if(d.act==="share-cal"){ openModal('<div class="mh"><button class="x" data-close aria-label="Close">×</button><h2>Share this calendar</h2></div><div class="mb">'+shareBlock(null)+'</div>'); return; }
+  if(d.copy){ copy(d.copy); return; }
+  if(d.ics){ var ev=state.events.filter(function(x){return x.id===d.ics;})[0]; download(ev.id+".ics", icsFor([ev],ev.title)); return; }
+  if(d.icsAll!==undefined){ download("lta-political-calendar.ics", icsFor(state.events.filter(function(x){return !isPast(x);}),"LTA Political Calendar")); return; }
+  if(d.nativeShare!==undefined){ var id=$("#ltac-modal").dataset.ev, ev2=state.events.filter(function(x){return x.id===id;})[0]; try{ navigator.share({title:ev2?ev2.title:"Alberta Political Calendar",text:shareText(ev2),url:ev2?eventUrl(ev2):CONFIG.pageUrl}).catch(function(){}); }catch(err){ toast("Use one of the buttons below"); } return; }
+  if(d.rform){ var ev3=state.events.filter(function(x){return x.id===$("#ltac-modal").dataset.ev;})[0]; rideForm(d.rform,ev3,null,d.from); return; }
+  if(d.rreq){ rideForm("req",null,d.rreq); return; }
+  if(d.pfilter){ state.party=d.pfilter; $("#ltac-party").value=d.pfilter; state.view="list"; render(); return; }
+  if(d.pdocs||d.gotoParties!==undefined){ e.preventDefault(); closeModal(); state.view="parties"; render(); return; }
+});
+root.addEventListener("keydown",function(e){ if(e.key==="Escape") closeModal(); if((e.key==="Enter"||e.key===" ")&&e.target.dataset&&e.target.dataset.open&&e.target.classList.contains("ev")){ e.preventDefault(); openEvent(e.target.dataset.open); } });
+root.addEventListener("submit",function(e){ var f=e.target.closest("form.f"); if(!f) return; e.preventDefault(); submitRide(f); });
+root.addEventListener("change",function(e){ if(e.target.id==="ltac-feed") feedOut(); });
+$("#ltac-type").addEventListener("change",function(){ state.type=this.value; render(); });
+$("#ltac-party").addEventListener("change",function(){ state.party=this.value; render(); });
+$("#ltac-q").addEventListener("input",function(){ state.q=this.value; render(); });
+$("#ltac-past").addEventListener("change",function(){ state.past=this.checked; render(); });
+$("#ltac-starred").addEventListener("change",function(){ state.starred=this.checked; render(); });
+function route(){ var m=/^#event-(.+)$/.exec(location.hash||""); if(m) openEvent(decodeURIComponent(m[1])); }
+window.addEventListener("hashchange",route);
+load();
+})();
+</script>
+</div>
+<!-- ===================== LTA POLITICAL CALENDAR — END ===================== -->
+</body>
+</html>

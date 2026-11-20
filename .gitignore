@@ -1,0 +1,9 @@
+__pycache__/
+*.db
+data/watch_state.json
+data/watch_report.json
+.env
+secrets/
+dist/
+build/
+*.spec

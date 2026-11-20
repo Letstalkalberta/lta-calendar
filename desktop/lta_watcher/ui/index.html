@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LTA Watcher</title>
+<style>
+:root{--blue:#0B2C6E;--red:#C8102E;--gold:#E8A800;--cream:#FDF7EC;--ink:#1d2433;--muted:#5b6474;--line:#e3dccd;--ok:#2e7d4f}
+*{box-sizing:border-box}body{margin:0;font-family:"Segoe UI",Arial,sans-serif;color:var(--ink);background:#f6f4ef;font-size:15px}
+h1,h2,h3{font-family:Georgia,serif;color:var(--blue);margin:0}
+header{background:var(--blue);color:#fff;padding:14px 22px;border-bottom:4px solid var(--gold);display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+header h1{color:#fff;font-size:22px}header .sub{color:#c9d3ea;font-size:13px}
+.pill{border-radius:999px;padding:4px 12px;font-weight:600;font-size:13px;background:#ffffff22}
+.pill.watching{background:#2e7d4f}.pill.paused{background:#8a6d00}.pill.offline,.pill.error{background:var(--red)}
+.sp{flex:1}
+button,.btn{font:inherit;font-size:14px;font-weight:600;border-radius:999px;padding:7px 14px;border:1px solid var(--blue);background:#fff;color:var(--blue);cursor:pointer}
+button:hover{background:var(--cream)}button.primary{background:var(--red);border-color:var(--red);color:#fff}button.primary:hover{background:#a50d26}
+button.ghost{background:transparent;color:#fff;border-color:#ffffff88}button.ghost:hover{background:#ffffff22}
+button:disabled{opacity:.5;cursor:default}
+nav{display:flex;gap:2px;background:var(--cream);border-bottom:1px solid var(--line);padding:0 16px}
+nav button{border:0;border-radius:0;background:none;padding:12px 16px;color:var(--muted);border-bottom:3px solid transparent}
+nav button[aria-selected=true]{color:var(--blue);border-bottom-color:var(--red);background:none}
+.badge{background:var(--red);color:#fff;border-radius:999px;padding:1px 8px;font-size:12px;margin-left:4px}
+main{padding:20px 22px;max-width:1080px;margin:0 auto}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:12px}
+.muted{color:var(--muted);font-size:13px}.err{background:#fde8eb;border:1px solid #f3b5bf;color:#7a1023;padding:9px 12px;border-radius:8px;margin:8px 0}
+.okmsg{background:#eaf5ee;border:1px solid #b9dcc2;color:#1f5a33;padding:9px 12px;border-radius:8px;margin:8px 0}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:var(--ink)}
+input,select,textarea{font:inherit;font-size:14px;border:1px solid #cfc6b3;border-radius:8px;padding:8px 10px;background:#fff;color:var(--ink)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}.full{grid-column:1/-1}
+.quote{background:var(--cream);border-left:4px solid var(--gold);padding:8px 12px;font-size:14px;margin:10px 0;font-style:italic}
+.tag{font-size:12px;border-radius:4px;padding:2px 7px;background:#eef1f7;color:var(--blue);font-weight:600;margin-right:4px}
+.tag.high{background:#eaf5ee;color:#1f5a33}.tag.medium{background:#fff4d6;color:#7a5b00}.tag.low{background:#fde8eb;color:#7a1023}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}th{font-size:12px;text-transform:uppercase;color:var(--muted)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#bbb;margin-right:6px}.dot.on{background:var(--ok)}.dot.bad{background:var(--red)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.center{max-width:520px;margin:40px auto}
+.check{flex-direction:row;align-items:flex-start;gap:8px;font-weight:400}
+</style></head>
+<body>
+<header>
+  <div><h1>LTA Watcher</h1><div class="sub" id="h-sub">Let's Talk Alberta political calendar</div></div>
+  <span class="pill" id="h-status">…</span>
+  <div class="sp"></div>
+  <button class="ghost" id="h-check">Check now</button>
+  <button class="ghost" id="h-pause">Pause</button>
+</header>
+<nav id="nav" hidden>
+  <button data-tab="review" aria-selected="true">Review <span class="badge" id="b-pending" hidden>0</span></button>
+  <button data-tab="add">Add an event</button>
+  <button data-tab="activity">Activity</button>
+  <button data-tab="sources">Sources</button>
+  <button data-tab="settings">Settings</button>
+</nav>
+<main id="main"></main>
+
+<script>
+const KEY="__LOCAL_KEY__";
+let S=null, tab="review", parties=[];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+async function L(path,body){ const r=await fetch(path,{method:"POST",headers:{"Content-Type":"application/json","X-Local-Key":KEY},body:JSON.stringify(body||{})}); const j=await r.json().catch(()=>({error:"No response"})); if(!r.ok) throw new Error(j.error||"Something went wrong"); return j; }
+const hub=(method,path,body)=>L("/local/hub",{method,path,body});
+function fmtWhen(e){ const s=String(e.start); if(s.length===10) return s+(e.end?" to "+e.end:"")+" (all day)"; const t=x=>new Date(x).toLocaleString("en-CA",{timeZone:"America/Regina",weekday:"short",month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"}); return t(s)+(e.end?" – "+t(e.end):"")+" Alberta time"; }
+function msg(el,text,ok){ el.innerHTML=text?`<div class="${ok?"okmsg":"err"}">${esc(text)}</div>`:""; }
+
+async function refresh(){
+  try{ S=await L("/local/state"); }catch(e){ return; }
+  const w=S.worker, st=S.enrolled?(S.paused?"paused":w.status):"not set up";
+  const pill=$("#h-status"); pill.textContent={watching:"● Watching",paused:"Paused",offline:"Offline",error:"Problem","not set up":"Not set up",starting:"Starting…"}[st]||st; pill.className="pill "+st.replace(/ /g,"-");
+  $("#h-sub").textContent=S.enrolled?`${S.pc_name||"This PC"} · v${S.version}${w.current?" · checking "+w.current:""}`:`v${S.version}`;
+  $("#h-pause").textContent=S.paused?"Resume":"Pause"; $("#h-pause").disabled=$("#h-check").disabled=!S.enrolled;
+  $("#nav").hidden=!S.enrolled;
+  const b=$("#b-pending"); b.hidden=!(w.pending>0); b.textContent=w.pending||0;
+}
+async function render(){
+  await refresh();
+  const m=$("#main");
+  if(!S.enrolled) return renderSetup(m);
+  document.querySelectorAll("nav button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===tab));
+  ({review:renderReview,add:renderAdd,activity:renderActivity,sources:renderSources,settings:renderSettings})[tab](m);
+}
+function needSignIn(m,why){
+  m.innerHTML=`<div class="card center"><h2>Sign in</h2><p class="muted">${esc(why||"Reviewers sign in to approve events, add events and see the status of every LTA PC. This PC keeps watching websites whether or not anyone is signed in.")}</p>
+  <div id="si-msg"></div><label>Email<input id="si-email" type="email" autocomplete="username"></label><br><label>Password<input id="si-pw" type="password" autocomplete="current-password"></label><br>
+  <button class="primary" id="si-go">Sign in</button></div>`;
+  const go=async()=>{ try{ const r=await L("/local/login",{email:$("#si-email").value,password:$("#si-pw").value}); if(r.must_change){ tab="settings"; } render(); }catch(e){ msg($("#si-msg"),e.message); } };
+  $("#si-go").onclick=go; $("#si-pw").onkeydown=e=>{ if(e.key==="Enter") go(); };
+}
+
+/* ---------- first-run setup ---------- */
+function renderSetup(m){
+  m.innerHTML=`<div class="card center"><h2>Connect this PC to LTA</h2>
+  <p>This PC will check political party sites, council calendars and news in the background and send what it finds to the LTA calendar.</p>
+  <p class="muted">Ask an LTA admin for a one-time setup code.</p><div id="su-msg"></div>
+  <label>Setup code<input id="su-code" placeholder="e.g. 3F9A-11C2-7B0D"></label><br>
+  <label>Name for this PC<input id="su-name" placeholder="e.g. Mirror office laptop"></label><br>
+  <details><summary class="muted">Advanced</summary><br><label>Hub address<input id="su-hub" value="${esc(S.hub_url)}"></label></details><br>
+  <button class="primary" id="su-go">Connect</button></div>`;
+  $("#su-go").onclick=async()=>{ $("#su-go").disabled=true; try{ await L("/local/setup",{code:$("#su-code").value.trim(),pc_name:$("#su-name").value.trim(),hub_url:$("#su-hub").value.trim()}); render(); }catch(e){ msg($("#su-msg"),e.message); $("#su-go").disabled=false; } };
+}
+
+/* ---------- review ---------- */
+async function loadParties(){ if(parties.length) return; try{ parties=(await hub("GET","/api/parties")).parties||[]; }catch(e){} }
+function partyOpts(sel){ return `<option value="">— none —</option>`+parties.map(p=>`<option value="${esc(p.id)}" ${p.id===sel?"selected":""}>${esc(p.name)}</option>`).join(""); }
+const TYPES=["election","by-election","referendum","agm","convention","nomination","council","board","committee","town-hall","leadership","deadline","other"];
+const LEVELS=["federal","provincial","municipal","party"];
+function opts(list,sel){ return list.map(x=>`<option ${x===sel?"selected":""}>${x}</option>`).join(""); }
+function localDT(s){ s=String(s||""); return s.length===10?s:s.slice(0,16); }
+async function renderReview(m){
+  if(!S.user) return needSignIn(m);
+  m.innerHTML=`<p class="muted">Loading…</p>`;
+  await loadParties();
+  let items; try{ items=(await hub("GET","/api/hub/review")).pending||[]; }catch(e){ if(!S.user) return render(); m.innerHTML=`<div class="err">${esc(e.message)}</div>`; return; }
+  if(!items.length){ m.innerHTML=`<div class="card"><h3>Nothing waiting</h3><p class="muted">When the AI reader finds an event on a party site, Elections Alberta or in the news, it shows up here for a person to check before it goes public.</p></div>`; return; }
+  m.innerHTML=`<p class="muted">${items.length} item(s) found automatically. Open each source, check the details against it, fix anything that's off, then approve or reject. Nothing here is public yet.</p>`+items.map((x,i)=>`
+  <div class="card" data-i="${i}"><div class="row"><h3 style="flex:1">${esc(x.title)}</h3><span class="tag ${esc(x.review?.confidence)}">${esc(x.review?.confidence||"")} confidence</span></div>
+  <div class="muted">${esc(fmtWhen(x))} · ${esc(x.level)}${x.party?" · "+esc(x.party):""} · from ${esc(x.source?.name)} (${esc(x.source?.kind)} source)</div>
+  <div class="quote">“${esc(x.review?.evidence_quote)}”</div>
+  <p>${esc(x.description)}</p>
+  <div class="row"><button data-open="${esc(x.source?.url)}">Open the source ↗</button><button data-edit>Edit details</button></div>
+  <div data-form hidden><br><div class="grid3">
+    <label class="full">Title<input name="title" value="${esc(x.title)}"></label>
+    <label>Starts (YYYY-MM-DD or YYYY-MM-DDTHH:MM)<input name="start" value="${esc(localDT(x.start))}"></label>
+    <label>Ends (optional)<input name="end" value="${esc(localDT(x.end))}"></label>
+    <label>Region / town<input name="region" value="${esc(x.region)}"></label>
+    <label>Type<select name="type">${opts(TYPES,x.type)}</select></label>
+    <label>Level<select name="level">${opts(LEVELS,x.level)}</select></label>
+    <label>Party<select name="party">${partyOpts(x.party)}</select></label>
+    <label>Place<input name="loc_name" value="${esc(x.location?.name)}"></label>
+    <label class="full">Address<input name="loc_addr" value="${esc(x.location?.address)}"></label>
+    <label class="full">Description (neutral, factual)<textarea name="description" rows="3">${esc(x.description)}</textarea></label></div></div>
+  <br><label class="check"><input type="checkbox" data-ok> I opened the source and the date, time and place match it.</label>
+  <div data-msg></div><div class="row"><button class="primary" data-approve>Approve and publish</button><button data-reject>Reject</button></div></div>`).join("");
+  m.querySelectorAll(".card[data-i]").forEach(card=>{
+    const x=items[+card.dataset.i], out=card.querySelector("[data-msg]");
+    card.querySelector("[data-open]").onclick=e=>L("/local/open",{url:e.target.dataset.open});
+    card.querySelector("[data-edit]").onclick=()=>{ const f=card.querySelector("[data-form]"); f.hidden=!f.hidden; };
+    card.querySelector("[data-approve]").onclick=async()=>{
+      if(!card.querySelector("[data-ok]").checked) return msg(out,"Tick the box to confirm you checked the source.");
+      const f=card.querySelector("[data-form]"); let edits=null;
+      if(!f.hidden){ const v=n=>f.querySelector(`[name=${n}]`).value; edits={title:v("title"),start:v("start"),end:v("end"),region:v("region"),type:v("type"),level:v("level"),party:v("party"),description:v("description"),location:{name:v("loc_name"),address:v("loc_addr")}}; }
+      try{ await hub("POST","/api/hub/review",{id:x.id,action:"approve",edits}); render(); }catch(e){ msg(out,e.message); }
+    };
+    card.querySelector("[data-reject]").onclick=async()=>{ try{ await hub("POST","/api/hub/review",{id:x.id,action:"reject"}); render(); }catch(e){ msg(out,e.message); } };
+  });
+}
+
+/* ---------- add event ---------- */
+async function renderAdd(m){
+  if(!S.user) return needSignIn(m);
+  await loadParties();
+  m.innerHTML=`<div class="card"><h2>Add an event</h2><p class="muted">For LTA town halls, or anything you've confirmed yourself. A source link is required: the page where the public can see the event (LTA's own page counts for LTA events). It publishes right away under your name.</p><div id="ad-msg"></div>
+  <div class="grid3"><label class="full">Title<input name="title"></label>
+  <label>Starts<input name="start" placeholder="2026-12-05T19:00 or 2026-12-05"></label><label>Ends (optional)<input name="end"></label><label>Region / town<input name="region"></label>
+  <label>Type<select name="type">${opts(TYPES,"town-hall")}</select></label><label>Level<select name="level">${opts(LEVELS,"party")}</select></label><label>Party<select name="party">${partyOpts("")}</select></label>
+  <label>Place<input name="loc_name"></label><label class="full">Address<input name="loc_addr"></label>
+  <label class="full">Description<textarea name="description" rows="3"></textarea></label>
+  <label class="full">Source link<input name="source_url" placeholder="https://"></label>
+  <label>Source name<input name="source_name" placeholder="e.g. Let's Talk Alberta events page"></label></div><br>
+  <button class="primary" id="ad-go">Publish event</button></div>`;
+  $("#ad-go").onclick=async()=>{ const v=n=>m.querySelector(`[name=${n}]`).value.trim();
+    try{ await hub("POST","/api/hub/events",{title:v("title"),start:v("start"),end:v("end"),region:v("region"),type:v("type"),level:v("level"),party:v("party"),description:v("description"),location:{name:v("loc_name"),address:v("loc_addr")},source_url:v("source_url"),source_name:v("source_name")});
+      msg($("#ad-msg"),"Published. It will show on the website calendar within a few minutes.",true); m.querySelectorAll("input,textarea").forEach(i=>i.value=""); }catch(e){ msg($("#ad-msg"),e.message); } };
+}
+
+/* ---------- activity ---------- */
+async function renderActivity(m){
+  const w=S.worker;
+  let html=`<div class="card"><h3>This PC</h3><p class="muted">Status: <b>${esc(w.status)}</b> · last contact with the hub ${esc(w.last_contact?new Date(w.last_contact).toLocaleString("en-CA",{timeZone:"America/Regina"}):"never")} · ${w.checked_today} checks today${w.last_error?`<br><span style="color:var(--red)">${esc(w.last_error)}</span>`:""}</p>
+  <table><thead><tr><th>When</th><th>Source</th><th>Result</th></tr></thead><tbody>${(w.recent||[]).map(r=>`<tr><td>${esc(r.at)}</td><td>${esc(r.source)}</td><td>${esc(r.result)}</td></tr>`).join("")||`<tr><td colspan=3 class=muted>Nothing yet. This PC checks whatever the hub hands it, every few minutes.</td></tr>`}</tbody></table></div>`;
+  if(!S.user){ m.innerHTML=html+`<div class="card muted">Sign in (Settings) to see every LTA PC and source.</div>`; return; }
+  try{
+    const st=await hub("GET","/api/hub/status");
+    html+=`<div class="card"><h3>LTA PCs</h3><table><thead><tr><th>PC</th><th>Last seen</th><th>Version</th><th>Checks today</th></tr></thead><tbody>${st.nodes.map(n=>{const s=JSON.parse(n.status||"{}");return `<tr><td><span class="dot ${n.online?"on":""}"></span>${esc(n.name)}${n.enabled?"":" (disabled)"}</td><td>${esc((n.last_seen||"").slice(0,16).replace("T"," "))}</td><td>${esc(n.version)}</td><td>${esc(s.checked_today??"")}</td></tr>`}).join("")}</tbody></table>
+    <p class="muted">AI reader: <b>${st.ai.on?"on":"off"}</b> · ${st.ai.calls_today} of ${st.ai.daily_limit} page reads used today.</p></div>
+    <div class="card"><h3>Recent actions</h3><table><tbody>${st.audit.map(a=>`<tr><td>${esc(a.at.slice(0,16).replace("T"," "))}</td><td>${esc(a.who)}</td><td>${esc(a.action)}</td><td>${esc(a.detail||a.target)}</td></tr>`).join("")}</tbody></table></div>`;
+  }catch(e){ html+=`<div class="err">${esc(e.message)}</div>`; }
+  m.innerHTML=html;
+}
+
+/* ---------- sources ---------- */
+async function renderSources(m){
+  if(!S.user) return needSignIn(m,"Sign in to see and manage the websites LTA watches.");
+  let st; try{ st=await hub("GET","/api/hub/status"); }catch(e){ m.innerHTML=`<div class="err">${esc(e.message)}</div>`; return; }
+  const names=Object.fromEntries(st.nodes.map(n=>[n.id,n.name])), admin=st.you.role==="admin";
+  m.innerHTML=`<div class="card"><h3>Websites being watched</h3><p class="muted">Each site is checked by one online LTA PC. If that PC goes offline, another takes over.</p>
+  <table><thead><tr><th>Source</th><th>Reader</th><th>Assigned to</th><th>Last checked</th><th>Result</th>${admin?"<th></th>":""}</tr></thead><tbody>${st.sources.map(s=>{const r=s.run||{};return `<tr><td><a href="#" data-open="${esc(s.page||s.url)}">${esc(s.name)}</a>${s.enabled===false?" <span class=tag>off</span>":""}</td><td>${s.kind.startsWith("ai")?"AI reader → review":"Official calendar"}</td><td>${esc(names[s.assigned_to]||"— (no PC online)")}</td><td>${esc((r.last_checked||"never").slice(0,16).replace("T"," "))}${r.last_node&&names[r.last_node]?` by ${esc(names[r.last_node])}`:""}</td><td>${r.last_error?`<span class="dot bad"></span>${esc(r.last_error.slice(0,80))}`:(r.last_ok?`<span class="dot on"></span>OK`:"")}</td>${admin?`<td><button data-toggle="${esc(s.id)}" data-on="${s.enabled===false?1:0}">${s.enabled===false?"Turn on":"Turn off"}</button></td>`:""}</tr>`}).join("")}</tbody></table></div>`+
+  (admin?`<div class="card"><h3>Add a website</h3><div id="sa-msg"></div><div class="grid3"><label>Name<input name="name" placeholder="e.g. Lacombe County council"></label><label class="full">Web address<input name="url" placeholder="https://"></label>
+  <label>How to read it<select name="kind"><option value="ai_page">AI reader (any page) → review</option><option value="ai_news">News site (AI) → review</option><option value="escribe">eSCRIBE council meetings</option><option value="ics">Calendar feed (.ics)</option><option value="wp_tribe">WordPress events calendar</option><option value="jsonld">Page with event markup</option></select></label>
+  <label>Level<select name="level">${opts(LEVELS,"municipal")}</select></label><label>Region / town<input name="region"></label></div><br><button class="primary" id="sa-go">Add</button></div>`:"");
+  m.querySelectorAll("[data-open]").forEach(a=>a.onclick=e=>{e.preventDefault();L("/local/open",{url:a.dataset.open});});
+  m.querySelectorAll("[data-toggle]").forEach(b=>b.onclick=async()=>{ try{ await hub("POST","/api/hub/sources",{action:b.dataset.on==="1"?"enable":"disable",source:{id:b.dataset.toggle}}); render(); }catch(e){ alert(e.message); } });
+  if(admin) $("#sa-go").onclick=async()=>{ const v=n=>m.querySelector(`[name=${n}]`).value.trim(); try{ await hub("POST","/api/hub/sources",{action:"add",source:{name:v("name"),url:v("url"),kind:v("kind"),level:v("level"),region:v("region"),type:v("level")==="municipal"?"council":"other"}}); render(); }catch(e){ msg($("#sa-msg"),e.message); } };
+}
+
+/* ---------- settings ---------- */
+function renderSettings(m){
+  const u=S.user;
+  m.innerHTML=`<div class="card"><h3>Reviewer</h3>${u?`<p>Signed in as <b>${esc(u.name)}</b> (${esc(u.role)}).</p>${u.must_change?`<div class="err">Please choose your own password now.</div>`:""}
+    <div id="pw-msg"></div><div class="grid3"><label>Current password<input id="pw-old" type="password"></label><label>New password (10+ characters)<input id="pw-new" type="password"></label><label>&nbsp;<button id="pw-go">Change password</button></label></div><br><button id="so">Sign out</button>`
+    :`<p class="muted">Not signed in. This PC still watches websites.</p><button class="primary" id="si">Sign in</button>`}</div>
+  <div class="card"><h3>This PC</h3><p class="muted">${esc(S.pc_name||"")} · ID ${esc(S.node_id)} · hub ${esc(S.hub_url)}</p>
+    <label class="check"><input type="checkbox" id="as" ${S.autostart?"checked":""}> Start LTA Watcher in the background when I sign in to Windows</label><br>
+    <div class="row"><button id="lg">Open log file</button><button id="fg">Disconnect this PC</button><button id="qt">Quit LTA Watcher</button></div></div>
+  <div class="card"><h3>Updates</h3><p class="muted">Version ${esc(S.version)}. Updates come from LTA's GitHub releases.</p><div id="up-msg"></div><div class="row"><button id="up">Check for updates</button></div></div>`;
+  if(u){ $("#so").onclick=async()=>{ await L("/local/logout"); render(); };
+    $("#pw-go").onclick=async()=>{ try{ await hub("POST","/api/hub/password",{old:$("#pw-old").value,new:$("#pw-new").value}); await L("/local/logout"); msg($("#pw-msg"),"Password changed. Please sign in again with the new password.",true); setTimeout(()=>{ tab="review"; needSignIn($("#main"),"Password changed. Sign in with your new password."); },1500); }catch(e){ msg($("#pw-msg"),e.message); } };
+  } else $("#si").onclick=()=>needSignIn(m);
+  $("#as").onchange=e=>L("/local/autostart",{on:e.target.checked});
+  $("#lg").onclick=()=>L("/local/open",{url:"log"});
+  $("#qt").onclick=()=>{ if(confirm("Quit LTA Watcher? This PC will stop checking websites until it's opened again.")) L("/local/quit"); };
+  $("#fg").onclick=async()=>{ if(confirm("Disconnect this PC from LTA? You'll need a new setup code to reconnect.")){ await L("/local/forget"); render(); } };
+  $("#up").onclick=async()=>{ const r=await L("/local/update",{}); $("#up-msg").innerHTML=`<div class="${r.ok?"okmsg":"err"}">${esc(r.message)}</div>`+(r.update?`<button class="primary" id="up-go">Install update</button>`:"");
+    const g=$("#up-go"); if(g) g.onclick=async()=>{ const x=await L("/local/update",{install:true}); msg($("#up-msg"),x.message,x.ok); }; };
+}
+
+/* ---------- wiring ---------- */
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{ tab=b.dataset.tab; render(); });
+$("#h-check").onclick=async()=>{ await L("/local/check-now"); setTimeout(refresh,800); };
+$("#h-pause").onclick=async()=>{ await L("/local/pause",{paused:!S.paused}); refresh(); };
+render(); setInterval(refresh,5000);
+</script>
+</body></html>
