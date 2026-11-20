@@ -76,8 +76,10 @@ def iso(d):
 
 def base_event(src, **kw):
     ev = {
-        "type": src.get("type", "other"), "level": src.get("level", "party"),
-        "jurisdiction": src.get("jurisdiction", src.get("level")), "party": src.get("party"),
+        "type": src.get("type", "other"),
+        "level": src.get("level") if src.get("level") in ("federal", "provincial", "municipal", "party") else "provincial",
+        "jurisdiction": src.get("jurisdiction") or (src.get("level") if src.get("level") in ("federal", "provincial", "municipal") else "provincial"),
+        "party": src.get("party"),
         "region": src.get("region"), "location": {}, "description": "", "candidates": [], "links": [],
         "source": {"name": src["name"], "url": src.get("page", src["url"]), "kind": "primary", "checked": TODAY.isoformat()},
         "status": "scheduled", "verified": True, "origin": "watcher:" + src["id"],

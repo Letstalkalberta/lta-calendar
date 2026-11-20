@@ -390,6 +390,7 @@ if __name__ == "__main__":
     init_db()
     hub.setup(db, LOCK)
     hub.bootstrap_admin()
+    hub.merge_seed_sources()
     threading.Thread(target=housekeeping, daemon=True).start()
     if os.environ.get("RUN_SCHEDULER", "1") == "1": threading.Thread(target=scheduler, daemon=True).start()
     print(f"LTA calendar server on :{PORT}  public base {PUBLIC}")

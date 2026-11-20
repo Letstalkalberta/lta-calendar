@@ -122,7 +122,8 @@
       "name": "Western Standard, Alberta",
       "kind": "ai_news",
       "url": "https://www.westernstandard.news/alberta",
-      "status": "needs_check"
+      "status": "needs_check",
+      "level": "general"
     },
     {
       "id": "news-cbc-calgary",
@@ -130,7 +131,8 @@
       "kind": "ai_news",
       "url": "https://www.cbc.ca/news/canada/calgary",
       "status": "blocked: CBC refuses automated requests (checked Nov 20, 2026)",
-      "enabled": false
+      "enabled": false,
+      "level": "general"
     },
     {
       "id": "news-cbc-edmonton",
@@ -138,14 +140,72 @@
       "kind": "ai_news",
       "url": "https://www.cbc.ca/news/canada/edmonton",
       "status": "blocked: CBC refuses automated requests (checked Nov 20, 2026)",
-      "enabled": false
+      "enabled": false,
+      "level": "general"
     },
     {
       "id": "news-daveberta",
       "name": "Daveberta (Alberta politics newsletter)",
       "kind": "ai_news",
       "url": "https://daveberta.substack.com",
+      "status": "needs_check",
+      "level": "general"
+    },
+    {
+      "id": "ab-gov-news",
+      "name": "Government of Alberta news releases",
+      "kind": "ai_page",
+      "url": "https://www.alberta.ca/news",
+      "level": "provincial",
+      "note": "official; loads for automated reading (checked Nov 20, 2026)"
+    },
+    {
+      "id": "ab-assembly-calendar",
+      "name": "Legislative Assembly of Alberta: sitting and committee calendar",
+      "kind": "ai_page",
+      "url": "https://assemblyonline.assembly.ab.ca",
+      "level": "provincial",
       "status": "needs_check"
+    },
+    {
+      "id": "news-global-calgary",
+      "name": "Global News Calgary",
+      "kind": "ai_news",
+      "url": "https://globalnews.ca/calgary/",
+      "level": "general",
+      "note": "loads for automated reading (checked Nov 20, 2026)"
+    },
+    {
+      "id": "news-global-edmonton",
+      "name": "Global News Edmonton",
+      "kind": "ai_news",
+      "url": "https://globalnews.ca/edmonton/",
+      "level": "general",
+      "status": "needs_check"
+    },
+    {
+      "id": "news-ctv-calgary",
+      "name": "CTV News Calgary",
+      "kind": "ai_news",
+      "url": "https://www.ctvnews.ca/calgary/",
+      "level": "general",
+      "note": "loads for automated reading (checked Nov 20, 2026)"
+    },
+    {
+      "id": "news-ctv-edmonton",
+      "name": "CTV News Edmonton",
+      "kind": "ai_news",
+      "url": "https://www.ctvnews.ca/edmonton/",
+      "level": "general",
+      "status": "needs_check"
+    },
+    {
+      "id": "news-albertapolitics",
+      "name": "Alberta Politics (David Climenhaga blog)",
+      "kind": "ai_news",
+      "url": "https://albertapolitics.ca/",
+      "level": "general",
+      "note": "loads for automated reading (checked Nov 20, 2026)"
     }
   ]
 }

@@ -91,6 +91,20 @@ def bootstrap_admin():
         c.execute("INSERT INTO users(id,name,email,pw,role,must_change,created) VALUES(?,?,?,?,?,0,?)", (secrets.token_hex(6), name, email, hash_pw(pw), "admin", now().isoformat()))
     print(f"Created first admin: {name} <{email}>")
 
+def merge_seed_sources():
+    """Add sources that are new in the shipped list to the live list on the disk. Never changes or
+    re-enables a source that's already there (so an admin's 'turn off' sticks)."""
+    live_p = DATA / "sources.json"
+    seed_p = pathlib.Path("/app/seed/sources.json")
+    if not seed_p.exists(): seed_p = ROOT / "watcher/sources.json"
+    if not live_p.exists() or seed_p.resolve() == live_p.resolve(): return
+    live, seed = watch.jload(live_p, {"sources": []}), watch.jload(seed_p, {"sources": []})
+    have = {x["id"] for x in live["sources"]}
+    added = [x for x in seed["sources"] if x["id"] not in have]
+    if added:
+        live["sources"] += added; watch.jsave(live_p, live)
+        print("Added new sources:", ", ".join(x["id"] for x in added))
+
 # ------------------------------------------------------------------ sources and work sharing
 def sources():
     return watch.jload(watch.sources_path(), {"sources": []})["sources"]
@@ -350,6 +364,7 @@ def handle(hd, method, path, body):
             if action == "add":
                 if not re.match(r"https?://", str(s.get("url", ""))): raise ValueError("Source needs a web address.")
                 if s.get("kind") not in ("escribe", "ics", "wp_tribe", "jsonld", "ai_page", "ai_news"): raise ValueError("Unknown reader type.")
+                if s.get("level") not in (None, "", "federal", "provincial", "municipal", "party", "general"): raise ValueError("Unknown level.")
                 s = {k: str(v)[:300] for k, v in s.items() if k in ("name", "kind", "url", "level", "jurisdiction", "party", "region", "type", "page")}
                 s["id"] = watch.slug(s.get("name") or s["url"])
                 if any(x["id"] == s["id"] for x in doc["sources"]): raise ValueError("A source with that name already exists.")

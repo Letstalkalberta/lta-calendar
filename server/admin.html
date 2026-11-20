@@ -91,10 +91,17 @@ async function people(){
   $("#cp").onclick=()=>changePw(false);
 }
 async function status(){
-  const st=await api("GET","status"), names=Object.fromEntries(st.nodes.map(n=>[n.id,n.name]));
+  const st=await api("GET","status"), names=Object.fromEntries(st.nodes.map(n=>[n.id,n.name])), admin=ME.role==="admin";
+  const lvl=s=>({general:"General",federal:"Federal",provincial:"Provincial",municipal:"Municipal",party:"Party"})[s.level]||"";
   m.innerHTML=`<div class="card"><h3>AI reader</h3><p class="muted">${st.ai.on?"On":"Off: add ANTHROPIC_API_KEY in the server settings"} · ${st.ai.calls_today} of ${st.ai.daily_limit} page reads used today · ${st.pending} waiting for review</p></div>
-   <div class="card"><h3>Websites</h3>${st.sources.map(s=>{const r=s.run||{};return `<div class="item"><span class="dot ${r.last_error?"bad":(r.last_ok?"on":"")}"></span><b>${esc(s.name)}</b>${s.enabled===false?" (off)":""}<div class="muted">${s.kind.startsWith("ai")?"AI reader → review":"Official calendar"} · last checked ${esc(ago(r.last_checked))}${r.last_node?" by "+esc(r.last_node==="server"?"the server":(names[r.last_node]||r.last_node)):""}${r.last_error?"<br>"+esc(r.last_error.slice(0,120)):""}</div></div>`}).join("")}</div>
+   <div class="card"><h3>Websites</h3>${st.sources.map(s=>{const r=s.run||{};return `<div class="item"><span class="dot ${s.enabled===false?"":(r.last_error?"bad":(r.last_ok?"on":""))}"></span><b>${esc(s.name)}</b>${s.enabled===false?" (off)":""}<div class="muted">${esc(lvl(s))}${lvl(s)?" · ":""}${s.kind.startsWith("ai")?"AI reader → review":"Official calendar"} · last checked ${esc(ago(r.last_checked))}${r.last_node?" by "+esc(r.last_node==="server"?"the server":(names[r.last_node]||r.last_node)):""}${r.last_error&&s.enabled!==false?"<br>"+esc(r.last_error.slice(0,120)):""}</div>${admin?`<button class="b" style="margin-top:6px" data-src="${esc(s.id)}" data-on="${s.enabled===false?1:0}">${s.enabled===false?"Turn on":"Turn off"}</button>`:""}</div>`}).join("")}</div>
+   ${admin?`<div class="card"><h3>Add a website</h3><div id="se"></div><label>Name</label><input id="sn" placeholder="e.g. Red Deer council"><label>Web address</label><input id="su" placeholder="https://"><label>How to read it</label><select id="sk"><option value="ai_page">AI reader (any page) → review</option><option value="ai_news">News site (AI) → review</option><option value="escribe">eSCRIBE council meetings</option><option value="ics">Calendar feed (.ics)</option><option value="wp_tribe">WordPress events calendar</option><option value="jsonld">Page with event markup</option></select><label>Level</label><select id="sl"><option value="general">General (news, covers every level)</option><option value="municipal">Municipal</option><option value="provincial">Provincial</option><option value="federal">Federal</option><option value="party">Party</option></select><label>Region / town (optional)</label><input id="sr"><button class="b p" id="sa">Add website</button></div>`:""}
    <div class="card"><h3>Recent actions</h3>${st.audit.map(a=>`<div class="item muted">${esc(ago(a.at))} · <b>${esc(a.who)}</b> ${esc(a.action)} ${esc(a.detail||a.target)}</div>`).join("")}</div>`;
+  if(!admin) return;
+  m.querySelectorAll("[data-src]").forEach(b=>b.onclick=async()=>{ await api("POST","sources",{action:b.dataset.on==="1"?"enable":"disable",source:{id:b.dataset.src}}); status(); });
+  $("#sa").onclick=async()=>{ const l=$("#sl").value;
+    try{ await api("POST","sources",{action:"add",source:{name:$("#sn").value.trim(),url:$("#su").value.trim(),kind:$("#sk").value,level:l,region:$("#sr").value.trim(),type:l==="municipal"?"council":"other"}}); status(); }
+    catch(x){ $("#se").innerHTML=`<div class="err">${esc(x.message)}</div>`; } };
 }
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{ tab=b.dataset.t; render(); });
 $("#out").onclick=signOut; render();
