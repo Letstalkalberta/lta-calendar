@@ -99,11 +99,32 @@ def merge_seed_sources():
     if not seed_p.exists(): seed_p = ROOT / "watcher/sources.json"
     if not live_p.exists() or seed_p.resolve() == live_p.resolve(): return
     live, seed = watch.jload(live_p, {"sources": []}), watch.jload(seed_p, {"sources": []})
-    have = {x["id"] for x in live["sources"]}
-    added = [x for x in seed["sources"] if x["id"] not in have]
-    if added:
+    byid = {x["id"]: x for x in live["sources"]}
+    added = [x for x in seed["sources"] if x["id"] not in byid]
+    changed = False
+    for x in seed["sources"]:  # new settings (e.g. "trusted") reach existing sources; nothing already set is overwritten
+        if x["id"] in byid:
+            for k, v in x.items():
+                if k not in byid[x["id"]] and k not in ("status",): byid[x["id"]][k] = v; changed = True
+    if added or changed:
         live["sources"] += added; watch.jsave(live_p, live)
-        print("Added new sources:", ", ".join(x["id"] for x in added))
+        if added: print("Added new sources:", ", ".join(x["id"] for x in added))
+    publish_pending_from_trusted()
+
+def publish_pending_from_trusted():
+    """Items already waiting for review from a source that is now an official listing get published."""
+    trusted = {x["id"] for x in sources() if x.get("trusted")}
+    pdoc = watch.jload(DATA / "pending.json", {"pending": [], "rejected_ids": []})
+    move = [e for e in pdoc["pending"] if e.get("origin", "").split(":", 1)[-1] in trusted]
+    if not move: return
+    store = watch.Store()
+    for e in move:
+        e["verified"] = True; e.setdefault("review", {})["auto"] = "Read automatically from the official source; not reviewed by a person."
+        e.setdefault("priority", watch.default_priority(e, next((x for x in sources() if x["id"] == e["origin"].split(":", 1)[-1]), None)))
+        if e["id"] not in store.by_id: store.by_id[e["id"]] = e; store.changes.append({"kind": "new", "id": e["id"]})
+    store.pending_doc["pending"] = [e for e in store.pending_doc["pending"] if e not in move and e.get("origin", "").split(":", 1)[-1] not in trusted]
+    store.save()
+    print(f"Published {len(move)} item(s) from official listings")
 
 # ------------------------------------------------------------------ sources and work sharing
 def sources():
@@ -172,10 +193,14 @@ def user_from(handler):
         return c.execute("SELECT * FROM users WHERE id=? AND active=1", (s["user_id"],)).fetchone()
 
 LIMITS = {"title": 200, "description": 2000, "region": 80, "type": 30, "level": 20, "party": 30}
+PRIORITIES = ("info", "public", "civic")
 
 def apply_edits(item, edits):
     for k, n in LIMITS.items():
         if k in edits: item[k] = (str(edits[k]).strip()[:n] or None) if k == "party" else str(edits[k]).strip()[:n]
+    if edits.get("priority"):
+        if edits["priority"] not in PRIORITIES: raise ValueError("Unknown priority.")
+        item["priority"] = edits["priority"]
     if "location" in edits and isinstance(edits["location"], dict):
         item["location"] = {"name": str(edits["location"].get("name", ""))[:200], "address": str(edits["location"].get("address", ""))[:200]}
     if "start" in edits:
@@ -284,8 +309,10 @@ def handle(hd, method, path, body):
             item = next((x for x in pdoc["pending"] if x["id"] == eid), None)
             if not item: raise KeyError(eid)
             if action == "approve":
-                if body.get("edits"):
-                    apply_edits(item, body["edits"]); watch.jsave(DATA / "pending.json", pdoc)
+                edits = dict(body.get("edits") or {})
+                if body.get("priority"): edits["priority"] = body["priority"]
+                if edits:
+                    apply_edits(item, edits); watch.jsave(DATA / "pending.json", pdoc)
                 review.approve(eid, who, str(body.get("note", ""))[:300])
             elif action == "reject": review.reject(eid)
             else: raise ValueError("Unknown action.")
@@ -301,6 +328,7 @@ def handle(hd, method, path, body):
               "source": {"name": str(body.get("source_name", "") or src_url)[:200], "url": src_url, "kind": "primary" if body.get("primary", True) else "secondary", "checked": now().date().isoformat()},
               "status": "scheduled", "verified": True, "origin": "manual:" + who, "review": {"approved_by": who, "approved": now().isoformat(timespec="minutes")}}
         apply_edits(ev, body)
+        ev.setdefault("priority", watch.default_priority(ev))
         ev["id"] = watch.slug(ev.get("party") or "lta", title, str(ev["start"])[:10])
         with _lock:
             store = watch.Store()
@@ -365,15 +393,22 @@ def handle(hd, method, path, body):
                 if not re.match(r"https?://", str(s.get("url", ""))): raise ValueError("Source needs a web address.")
                 if s.get("kind") not in ("escribe", "ics", "wp_tribe", "jsonld", "ai_page", "ai_news"): raise ValueError("Unknown reader type.")
                 if s.get("level") not in (None, "", "federal", "provincial", "municipal", "party", "general"): raise ValueError("Unknown level.")
+                trusted = bool(s.get("trusted")); prio = s.get("priority") if s.get("priority") in PRIORITIES else None
                 s = {k: str(v)[:300] for k, v in s.items() if k in ("name", "kind", "url", "level", "jurisdiction", "party", "region", "type", "page")}
+                if trusted: s["trusted"] = True
+                if prio: s["priority"] = prio
                 s["id"] = watch.slug(s.get("name") or s["url"])
                 if any(x["id"] == s["id"] for x in doc["sources"]): raise ValueError("A source with that name already exists.")
                 s["added_by"] = who; doc["sources"].append(s)
             elif action in ("enable", "disable"):
                 for x in doc["sources"]:
                     if x["id"] == s.get("id"): x["enabled"] = action == "enable"
+            elif action in ("trust", "untrust"):
+                for x in doc["sources"]:
+                    if x["id"] == s.get("id"): x["trusted"] = action == "trust"
             else: raise ValueError("Unknown action.")
             watch.jsave(DATA / "sources.json", doc)
+            if action == "trust": publish_pending_from_trusted()
         audit(who, f"source {action}", s.get("id", ""), s.get("url", "")); hd.out(200, {"ok": True}); return True
 
     hd.out(404, {"error": "Not found"}); return True

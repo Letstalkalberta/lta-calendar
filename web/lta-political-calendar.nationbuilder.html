@@ -44,6 +44,19 @@
 #lta-cal .tag.federal{background:#e8eefb}#lta-cal .tag.provincial{background:#fdf0d2;color:#6b4c00}#lta-cal .tag.municipal{background:#e6f3ea;color:#1f5a33}#lta-cal .tag.party{background:#f3e8ec;color:#7a1023}
 #lta-cal .tag.done{background:#ececec;color:#555}
 #lta-cal .tag.unv{background:#fff4d6;color:#7a5b00}
+#lta-cal .ev.p-civic{border-left:6px solid var(--red);background:#fffafa}
+#lta-cal .ev.p-civic h3{font-size:19px}
+#lta-cal .ev.p-civic .date{background:var(--red)}#lta-cal .ev.p-civic .date .m{color:#fff}
+#lta-cal .ev.p-public{border-left:6px solid var(--gold)}
+#lta-cal .ev.p-info{border-left:6px solid #d9d4c7;padding:8px 12px}
+#lta-cal .ev.p-info h3{font-size:15px;color:#3d4a66;font-weight:normal}
+#lta-cal .ev.p-info .date{background:#8a93a6}#lta-cal .ev.p-info .date .d{font-size:20px}#lta-cal .ev.p-info .date .m{color:#fff}
+#lta-cal .tag.civic{background:var(--red);color:#fff}#lta-cal .tag.public{background:#fff1c7;color:#6b4c00}#lta-cal .tag.info{background:#eceae4;color:#5b6474}
+#lta-cal .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:10px 4px 0}
+#lta-cal .legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+#lta-cal .legend .lc::before{background:var(--red)}#lta-cal .legend .lp::before{background:var(--gold)}#lta-cal .legend .li::before{background:#c9c3b4}
+#lta-cal .pill.p-civic{font-weight:bold;background:#fde8eb;border-left-color:var(--red)}
+#lta-cal .pill.p-info{opacity:.7}
 #lta-cal .star{border:0;background:none;font-size:22px;color:#c9c0ad;padding:0 4px;line-height:1}
 #lta-cal .star[aria-pressed="true"]{color:var(--gold)}
 /* month grid */
@@ -125,7 +138,9 @@
   <input type="search" id="ltac-q" placeholder="Search: town, riding, party…" aria-label="Search">
   <label class="tog"><input type="checkbox" id="ltac-past"> Show past</label>
   <label class="tog"><input type="checkbox" id="ltac-starred"> ★ My events</label>
+  <label class="tog"><input type="checkbox" id="ltac-noinfo"> Hide informational</label>
 </div>
+<div class="legend"><span class="lc">Civic participation: vote, elections, AGMs</span><span class="lp">Public event: attend in person</span><span class="li">Informational: follow along</span></div>
 
 <div class="tabs" role="tablist">
   <button class="tab" role="tab" data-view="list" aria-selected="true">Upcoming</button>
@@ -158,9 +173,12 @@ var $ = function(s,el){return (el||root).querySelector(s);};
 var $$ = function(s,el){return Array.prototype.slice.call((el||root).querySelectorAll(s));};
 var TZ = "America/Regina"; // fixed UTC-6, same as Alberta's year-round time since 2026
 var TYPE_LABEL = {"election":"General election","by-election":"By-election","referendum":"Referendum","agm":"Annual general meeting","convention":"Convention","nomination":"Nomination meeting","council":"Council meeting","board":"Board meeting","committee":"Committee meeting","town-hall":"Town hall","leadership":"Leadership vote","deadline":"Deadline","other":"Other"};
+var TYPE_PRIORITY = {"election":"civic","by-election":"civic","referendum":"civic","agm":"civic","convention":"civic","nomination":"civic","leadership":"civic","deadline":"civic","council":"public","town-hall":"public","board":"public","committee":"info","other":"info"};
+var PRIORITY_LABEL = {"civic":"Civic participation","public":"Public event","info":"Informational"};
+function prio(e){ return e.priority || TYPE_PRIORITY[e.type] || "info"; }
 var LEVEL_LABEL = {"federal":"Federal","provincial":"Provincial","municipal":"Municipal","party":"Party"};
 
-var state = { events:[], parties:{}, partyList:[], view:"list", levels:{federal:1,provincial:1,municipal:1,party:1}, type:"", party:"", q:"", past:false, starred:false, cursor:null, demoRides:{} };
+var state = { events:[], parties:{}, partyList:[], view:"list", levels:{federal:1,provincial:1,municipal:1,party:1}, type:"", party:"", q:"", past:false, starred:false, noinfo:false, cursor:null, demoRides:{} };
 
 function store(k,v){ try{ if(v===undefined) return JSON.parse(localStorage.getItem("ltac_"+k)||"null"); localStorage.setItem("ltac_"+k, JSON.stringify(v)); }catch(e){ return null; } }
 var stars = store("stars") || {};
@@ -243,13 +261,14 @@ function visible(){
     if(state.party){ var inC=(e.candidates||[]).some(function(c){return c.party===state.party;}); if(e.party!==state.party && !inC) return false; }
     if(!state.past && isPast(e) && state.view==="list") return false;
     if(state.starred && !stars[e.id]) return false;
+    if(state.noinfo && prio(e)==="info") return false;
     if(q){ var p=state.parties[e.party]; var hay=[e.title,e.region,locText(e),e.description,p&&p.name,p&&p.short].join(" ").toLowerCase(); if(hay.indexOf(q)<0) return false; }
     return true;
   });
 }
 function tagsFor(e){
   var p=state.parties[e.party];
-  return '<span class="tag '+esc(e.level)+'">'+esc(LEVEL_LABEL[e.level]||e.level)+'</span><span class="tag">'+esc(TYPE_LABEL[e.type]||e.type)+'</span>'+(p?'<span class="tag">'+esc(p.short)+'</span>':'')+(isPast(e)||e.status==="completed"?'<span class="tag done">Past</span>':'')+(e.verified===false?'<span class="tag unv">Unconfirmed</span>':'');
+  return '<span class="tag '+prio(e)+'">'+PRIORITY_LABEL[prio(e)]+'</span><span class="tag '+esc(e.level)+'">'+esc(LEVEL_LABEL[e.level]||e.level)+'</span><span class="tag">'+esc(TYPE_LABEL[e.type]||e.type)+'</span>'+(p?'<span class="tag">'+esc(p.short)+'</span>':'')+(isPast(e)||e.status==="completed"?'<span class="tag done">Past</span>':'')+(e.verified===false?'<span class="tag unv">Unconfirmed</span>':'');
 }
 
 /* ---------- views ---------- */
@@ -264,7 +283,7 @@ function render(){
   list.forEach(function(e){
     var s=startDate(e), m=fmt(s,{month:"long",year:"numeric"});
     if(m!==lastM){ html+='<div class="month-h">'+esc(m)+'</div>'; lastM=m; }
-    html+='<div class="ev'+(isPast(e)?' past':'')+'" role="button" tabindex="0" data-open="'+esc(e.id)+'">'+
+    html+='<div class="ev p-'+prio(e)+(isPast(e)?' past':'')+'" role="button" tabindex="0" data-open="'+esc(e.id)+'">'+
       '<div class="date"><div class="m">'+esc(fmt(s,{month:"short"}))+'</div><div class="d">'+esc(fmt(s,{day:"numeric"}))+'</div><div class="y">'+esc(fmt(s,{year:"numeric"}))+'</div></div>'+
       '<div><h3>'+esc(e.title)+'</h3><div class="meta">'+esc(whenText(e))+'</div><div class="meta">'+esc(locText(e))+'</div><div class="tags">'+tagsFor(e)+'</div></div>'+
       '<button class="star" data-star="'+esc(e.id)+'" aria-pressed="'+(stars[e.id]?"true":"false")+'" title="Add to My events" aria-label="Add to My events">★</button></div>';
@@ -284,7 +303,7 @@ function renderMonth(v){
   for(var i=0;i<42;i++){
     var d=new Date(Date.UTC(y,m,1-startDow+i,12)), k=d.toISOString().slice(0,10), out=d.getUTCMonth()!==m;
     if(i>=35 && out && d.getUTCDate()<8) break;
-    h+='<div class="cell'+(out?' out':'')+(k===today?' today':'')+'"><div class="n">'+d.getUTCDate()+'</div>'+(byDay[k]||[]).map(function(e){return '<button class="pill '+esc(e.level)+'" data-open="'+esc(e.id)+'" title="'+esc(e.title)+'">'+esc(e.title)+'</button>';}).join("")+'</div>';
+    h+='<div class="cell'+(out?' out':'')+(k===today?' today':'')+'"><div class="n">'+d.getUTCDate()+'</div>'+(byDay[k]||[]).map(function(e){return '<button class="pill '+esc(e.level)+' p-'+prio(e)+'" data-open="'+esc(e.id)+'" title="'+esc(e.title)+'">'+esc(e.title)+'</button>';}).join("")+'</div>';
   }
   v.innerHTML=h+'</div><p class="note">Tip: tap an event for details, candidates, governance documents, sharing and rides.</p>';
 }
@@ -340,7 +359,7 @@ function showTab(t){
       '<p>'+esc(ev.description||"")+'</p>'+
       ((ev.links||[]).length?'<h3>Links</h3><ul>'+ev.links.map(function(l){return '<li><a href="'+esc(l.url)+'" target="_blank" rel="noopener">'+esc(l.label)+'</a></li>';}).join("")+'</ul>':'')+
       (p?'<h3>'+esc(p.name)+'</h3><div class="meta">Leader: '+esc(p.leader||"—")+' · <a href="'+esc(p.website)+'" target="_blank" rel="noopener">Website</a></div>'+docsList(p):'')+
-      '<div class="src"><b>Source:</b> <a href="'+esc(ev.source&&ev.source.url)+'" target="_blank" rel="noopener">'+esc(ev.source&&ev.source.name)+'</a> · '+(ev.source&&ev.source.kind==="primary"?"Primary source":"Secondary source")+(ev.source&&ev.source.checked?' · checked '+esc(ev.source.checked):'')+(ev.verified===false?'<br><b>Unconfirmed:</b> found automatically and not yet checked by our team.':'')+'</div>';
+      '<div class="src"><b>Source:</b> <a href="'+esc(ev.source&&ev.source.url)+'" target="_blank" rel="noopener">'+esc(ev.source&&ev.source.name)+'</a> · '+(ev.source&&ev.source.kind==="primary"?"Primary source":"Secondary source")+(ev.source&&ev.source.checked?' · checked '+esc(ev.source.checked):'')+(ev.verified===false?'<br><b>Unconfirmed:</b> found automatically and not yet checked by our team.':'')+(ev.review&&ev.review.auto?'<br>'+esc(ev.review.auto):'')+'</div>';
   } else if(t==="candidates"){
     var cs=ev.candidates||[], parties={};
     cs.forEach(function(c){ if(c.party) parties[c.party]=1; }); if(ev.party) parties[ev.party]=1;
@@ -463,6 +482,7 @@ $("#ltac-party").addEventListener("change",function(){ state.party=this.value; r
 $("#ltac-q").addEventListener("input",function(){ state.q=this.value; render(); });
 $("#ltac-past").addEventListener("change",function(){ state.past=this.checked; render(); });
 $("#ltac-starred").addEventListener("change",function(){ state.starred=this.checked; render(); });
+$("#ltac-noinfo").addEventListener("change",function(){ state.noinfo=this.checked; render(); });
 function route(){ var m=/^#event-(.+)$/.exec(location.hash||""); if(m) openEvent(decodeURIComponent(m[1])); }
 window.addEventListener("hashchange",route);
 load();

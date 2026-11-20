@@ -165,7 +165,8 @@
       "kind": "ai_page",
       "url": "https://assemblyonline.assembly.ab.ca",
       "level": "provincial",
-      "status": "needs_check"
+      "trusted": true,
+      "priority": "info"
     },
     {
       "id": "news-global-calgary",

@@ -32,6 +32,9 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#bbb;margin-right:6px}.dot.on{background:var(--ok)}.dot.bad{background:var(--red)}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .center{max-width:520px;margin:40px auto}
+.prio{display:flex;gap:8px;flex-wrap:wrap}.prio button{flex:1;min-width:170px}
+.prio .civic{background:var(--red);border-color:var(--red);color:#fff}.prio .public{background:#fff7e0;border-color:var(--gold);color:var(--ink)}.prio .info{background:#f1f1f1;border-color:#bbb;color:var(--muted)}
+.prio .sug{outline:3px solid var(--blue);outline-offset:2px}
 .check{flex-direction:row;align-items:flex-start;gap:8px;font-weight:400}
 </style></head>
 <body>
@@ -129,17 +132,19 @@ async function renderReview(m){
     <label class="full">Address<input name="loc_addr" value="${esc(x.location?.address)}"></label>
     <label class="full">Description (neutral, factual)<textarea name="description" rows="3">${esc(x.description)}</textarea></label></div></div>
   <br><label class="check"><input type="checkbox" data-ok> I opened the source and the date, time and place match it.</label>
-  <div data-msg></div><div class="row"><button class="primary" data-approve>Approve and publish</button><button data-reject>Reject</button></div></div>`).join("");
+  <div data-msg></div><div class="muted" style="margin:6px 0">Approve and publish as:</div>
+  <div class="prio">${[["civic","Civic participation","vote, election, AGM"],["public","Public event","attend in person"],["info","Informational","follow along"]].map(([k,l,h])=>`<button class="${k} ${(x.priority||"info")===k?"sug":""}" data-approve="${k}">${l}<br><span style="font-weight:400;font-size:12px">${h}</span></button>`).join("")}</div>
+  <div class="row" style="margin-top:8px"><button data-reject>Reject</button></div></div>`).join("");
   m.querySelectorAll(".card[data-i]").forEach(card=>{
     const x=items[+card.dataset.i], out=card.querySelector("[data-msg]");
     card.querySelector("[data-open]").onclick=e=>L("/local/open",{url:e.target.dataset.open});
     card.querySelector("[data-edit]").onclick=()=>{ const f=card.querySelector("[data-form]"); f.hidden=!f.hidden; };
-    card.querySelector("[data-approve]").onclick=async()=>{
+    card.querySelectorAll("[data-approve]").forEach(btn=>btn.onclick=async()=>{
       if(!card.querySelector("[data-ok]").checked) return msg(out,"Tick the box to confirm you checked the source.");
       const f=card.querySelector("[data-form]"); let edits=null;
       if(!f.hidden){ const v=n=>f.querySelector(`[name=${n}]`).value; edits={title:v("title"),start:v("start"),end:v("end"),region:v("region"),type:v("type"),level:v("level"),party:v("party"),description:v("description"),location:{name:v("loc_name"),address:v("loc_addr")}}; }
-      try{ await hub("POST","/api/hub/review",{id:x.id,action:"approve",edits}); render(); }catch(e){ msg(out,e.message); }
-    };
+      try{ await hub("POST","/api/hub/review",{id:x.id,action:"approve",edits,priority:btn.dataset.approve}); render(); }catch(e){ msg(out,e.message); }
+    });
     card.querySelector("[data-reject]").onclick=async()=>{ try{ await hub("POST","/api/hub/review",{id:x.id,action:"reject"}); render(); }catch(e){ msg(out,e.message); } };
   });
 }
@@ -152,13 +157,14 @@ async function renderAdd(m){
   <div class="grid3"><label class="full">Title<input name="title"></label>
   <label>Starts<input name="start" placeholder="2026-12-05T19:00 or 2026-12-05"></label><label>Ends (optional)<input name="end"></label><label>Region / town<input name="region"></label>
   <label>Type<select name="type">${opts(TYPES,"town-hall")}</select></label><label>Level<select name="level">${opts(LEVELS,"party")}</select></label><label>Party<select name="party">${partyOpts("")}</select></label>
+  <label>Priority<select name="priority"><option value="public">Public event (attend in person)</option><option value="civic">Civic participation (vote, election, AGM)</option><option value="info">Informational (follow along)</option></select></label>
   <label>Place<input name="loc_name"></label><label class="full">Address<input name="loc_addr"></label>
   <label class="full">Description<textarea name="description" rows="3"></textarea></label>
   <label class="full">Source link<input name="source_url" placeholder="https://"></label>
   <label>Source name<input name="source_name" placeholder="e.g. Let's Talk Alberta events page"></label></div><br>
   <button class="primary" id="ad-go">Publish event</button></div>`;
   $("#ad-go").onclick=async()=>{ const v=n=>m.querySelector(`[name=${n}]`).value.trim();
-    try{ await hub("POST","/api/hub/events",{title:v("title"),start:v("start"),end:v("end"),region:v("region"),type:v("type"),level:v("level"),party:v("party"),description:v("description"),location:{name:v("loc_name"),address:v("loc_addr")},source_url:v("source_url"),source_name:v("source_name")});
+    try{ await hub("POST","/api/hub/events",{title:v("title"),start:v("start"),end:v("end"),region:v("region"),type:v("type"),level:v("level"),party:v("party"),priority:v("priority"),description:v("description"),location:{name:v("loc_name"),address:v("loc_addr")},source_url:v("source_url"),source_name:v("source_name")});
       msg($("#ad-msg"),"Published. It will show on the website calendar within a few minutes.",true); m.querySelectorAll("input,textarea").forEach(i=>i.value=""); }catch(e){ msg($("#ad-msg"),e.message); } };
 }
 
@@ -186,10 +192,11 @@ async function renderSources(m){
   <table><thead><tr><th>Source</th><th>Reader</th><th>Assigned to</th><th>Last checked</th><th>Result</th>${admin?"<th></th>":""}</tr></thead><tbody>${st.sources.map(s=>{const r=s.run||{};return `<tr><td><a href="#" data-open="${esc(s.page||s.url)}">${esc(s.name)}</a>${s.enabled===false?" <span class=tag>off</span>":""}</td><td>${s.kind.startsWith("ai")?"AI reader → review":"Official calendar"}</td><td>${esc(names[s.assigned_to]||"— (no PC online)")}</td><td>${esc((r.last_checked||"never").slice(0,16).replace("T"," "))}${r.last_node&&names[r.last_node]?` by ${esc(names[r.last_node])}`:""}</td><td>${r.last_error?`<span class="dot bad"></span>${esc(r.last_error.slice(0,80))}`:(r.last_ok?`<span class="dot on"></span>OK`:"")}</td>${admin?`<td><button data-toggle="${esc(s.id)}" data-on="${s.enabled===false?1:0}">${s.enabled===false?"Turn on":"Turn off"}</button></td>`:""}</tr>`}).join("")}</tbody></table></div>`+
   (admin?`<div class="card"><h3>Add a website</h3><div id="sa-msg"></div><div class="grid3"><label>Name<input name="name" placeholder="e.g. Lacombe County council"></label><label class="full">Web address<input name="url" placeholder="https://"></label>
   <label>How to read it<select name="kind"><option value="ai_page">AI reader (any page) → review</option><option value="ai_news">News site (AI) → review</option><option value="escribe">eSCRIBE council meetings</option><option value="ics">Calendar feed (.ics)</option><option value="wp_tribe">WordPress events calendar</option><option value="jsonld">Page with event markup</option></select></label>
-  <label>Level<select name="level">${opts(SOURCE_LEVELS,"general")}</select></label><label>Region / town<input name="region"></label></div><br><button class="primary" id="sa-go">Add</button></div>`:"");
+  <label>Level<select name="level">${opts(SOURCE_LEVELS,"general")}</select></label><label>Region / town<input name="region"></label>
+  <label class="check full"><input type="checkbox" name="trusted"> Official listing (a council's or the Legislature's own calendar): publish without review</label></div><br><button class="primary" id="sa-go">Add</button></div>`:"");
   m.querySelectorAll("[data-open]").forEach(a=>a.onclick=e=>{e.preventDefault();L("/local/open",{url:a.dataset.open});});
   m.querySelectorAll("[data-toggle]").forEach(b=>b.onclick=async()=>{ try{ await hub("POST","/api/hub/sources",{action:b.dataset.on==="1"?"enable":"disable",source:{id:b.dataset.toggle}}); render(); }catch(e){ alert(e.message); } });
-  if(admin) $("#sa-go").onclick=async()=>{ const v=n=>m.querySelector(`[name=${n}]`).value.trim(); try{ await hub("POST","/api/hub/sources",{action:"add",source:{name:v("name"),url:v("url"),kind:v("kind"),level:v("level"),region:v("region"),type:v("level")==="municipal"?"council":"other"}}); render(); }catch(e){ msg($("#sa-msg"),e.message); } };
+  if(admin) $("#sa-go").onclick=async()=>{ const v=n=>m.querySelector(`[name=${n}]`).value.trim(); try{ await hub("POST","/api/hub/sources",{action:"add",source:{name:v("name"),url:v("url"),kind:v("kind"),level:v("level"),region:v("region"),type:v("level")==="municipal"?"council":"other",trusted:m.querySelector("[name=trusted]").checked}}); render(); }catch(e){ msg($("#sa-msg"),e.message); } };
 }
 
 /* ---------- settings ---------- */

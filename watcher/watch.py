@@ -74,6 +74,16 @@ def iso(d):
         return d.astimezone(AB).isoformat(timespec="minutes")
     return d.isoformat()
 
+PRIORITIES = ("info", "public", "civic")  # informational · public event · civic participation
+TYPE_PRIORITY = {"election": "civic", "by-election": "civic", "referendum": "civic", "agm": "civic", "convention": "civic",
+                 "nomination": "civic", "leadership": "civic", "deadline": "civic",
+                 "council": "public", "town-hall": "public", "board": "public",
+                 "committee": "info", "other": "info"}
+
+def default_priority(ev, src=None):
+    if src and src.get("priority") in PRIORITIES: return src["priority"]
+    return TYPE_PRIORITY.get(ev.get("type", "other"), "info")
+
 def base_event(src, **kw):
     ev = {
         "type": src.get("type", "other"),
@@ -85,6 +95,7 @@ def base_event(src, **kw):
         "status": "scheduled", "verified": True, "origin": "watcher:" + src["id"],
     }
     ev.update(kw)
+    ev.setdefault("priority", default_priority(ev, src))
     return ev
 
 # ---------------------------------------------------------------- structured readers
@@ -335,6 +346,7 @@ def ai_items_to_pending(src, items, text, parties):
                         candidates=[{"name": c["name"], "party": match_party(c.get("party_name", ""), parties), "affiliation": c.get("party_name", ""), "status": c.get("status", "")} for c in it.get("candidates", [])],
                         links=[{"label": "Event page", "url": it["event_url"]}] if it.get("event_url", "").startswith("http") else [],
                         verified=False, origin="ai:" + src["id"])
+        ev["priority"] = default_priority(ev, src)
         ev["source"]["kind"] = "secondary" if is_news else "primary"
         ev["review"] = {"evidence_quote": it.get("evidence_quote"), "name_quote": it.get("name_quote"), "confidence": it.get("confidence"), "found": dt.datetime.now(AB).isoformat(timespec="minutes"), "model": MODEL}
         if not ev["end"]: ev.pop("end")
@@ -402,6 +414,18 @@ class Store:
                 if "end" not in ev: old.pop("end", None)
                 old["source"]["checked"] = TODAY.isoformat()
 
+    def accept_ai(self, src, items):
+        """AI finds: publish if the source is an official listing, otherwise queue for review."""
+        if not src.get("trusted"):
+            before = self.queued; self.queue(items); return self.queued - before
+        n = 0
+        for ev in items:
+            if ev["id"] in self.by_id: continue
+            ev["verified"] = True
+            ev.setdefault("review", {})["auto"] = "Read automatically from the official source; not reviewed by a person."
+            self.by_id[ev["id"]] = ev; self.changes.append({"kind": "new", "id": ev["id"]}); self.added += 1; n += 1
+        return n
+
     def queue(self, items):
         for ev in items:
             if ev["id"] in self.by_id or ev["id"] in self.pend_ids: continue
@@ -424,10 +448,10 @@ class Store:
             jsave(DATA / "changes.json", log)
 
 def ai_process(src, text, store, parties):
-    """Run the AI reader on page text and queue verified items. Returns number queued."""
-    before = store.queued
-    store.queue(ai_items_to_pending(src, ai_extract(src, text), text, parties))
-    return store.queued - before
+    """Run the AI reader on page text. Items from official listings (source "trusted": true) publish
+    straight away; everything else goes to the review queue. Returns the number of items kept."""
+    items = ai_items_to_pending(src, ai_extract(src, text), text, parties)
+    return store.accept_ai(src, items)
 
 # ---------------------------------------------------------------- main (stand-alone / server cron)
 def sources_path():
@@ -466,7 +490,7 @@ def run(only=None, stale_hours=None, lock=None):
         store = Store(); state = jload(STATE, {})
         for src, r, items in results:
             if r["kind"] == "structured": store.merge_structured(r["events"])
-            elif items: store.queue(items)
+            elif items: store.accept_ai(src, items)
             state[src["id"]] = {"hash": r.get("hash", state.get(src["id"], {}).get("hash")), "checked": now.isoformat(timespec="minutes"), "by": "server"}
         store.save(); jsave(STATE, state)
     report.update(added=store.added, updated=store.updated, queued=store.queued, checked_at=now.isoformat(timespec="minutes"))
