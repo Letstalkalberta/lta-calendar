@@ -172,6 +172,17 @@ def share_page(e):
             f"<meta name='twitter:card' content='summary_large_image'><meta http-equiv='refresh' content='0;url={u}'>"
             f"<link rel=canonical href='{u}'></head><body><p><a href='{u}'>{t}</a></p></body></html>")
 
+def calendar_page():
+    """The same calendar page as the NationBuilder block, served by the server itself for
+    previewing and team testing. Uses live data from this server."""
+    tpl = (ROOT / "web/calendar.template.html").read_text()
+    gen, evs = published()
+    def js(o): return json.dumps(o, ensure_ascii=False).replace("</", "<\\/")
+    page = tpl.replace('/*__EVENTS__*/{"events":[]}', js({"generated": gen, "events": evs})).replace('/*__PARTIES__*/{"parties":[]}', js(load_json("parties.json", {"parties": []})))
+    cfg = '<script>window.LTA_CAL_CONFIG={apiBase:location.origin,feedBase:location.origin+"/feeds",pageUrl:location.origin+"/calendar"};</script>'
+    page = page.replace("<title>", '<meta name="robots" content="noindex"><title>', 1)
+    return page.replace('<div id="lta-cal" class="ltac">', cfg + '<div id="lta-cal" class="ltac">', 1)
+
 def manage_page(token):
     with db() as c:
         o = c.execute("SELECT * FROM offers WHERE token=?", (token,)).fetchone()
@@ -264,6 +275,8 @@ class H(BaseHTTPRequestHandler):
         m = re.fullmatch(r"/rides/manage/([A-Za-z0-9_-]{20,})", p)
         if m:
             pg = manage_page(m.group(1)); return self.out(200 if pg else 404, pg or page("Not found", "<h1>That link has expired</h1><p>Ride details are deleted one day after the event.</p>"), "text/html; charset=utf-8")
+        if p in ("/calendar", "/calendar/", "/"):
+            return self.out(200, calendar_page(), "text/html; charset=utf-8", cache="no-store")
         if p in ("/admin", "/admin/"):
             return self.out(200, (ROOT / "server/admin.html").read_bytes(), "text/html; charset=utf-8")
         if p == "/admin/review":

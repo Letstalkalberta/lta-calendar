@@ -25,7 +25,7 @@ services:
       - key: ADMIN_KEY
         generateValue: true
       - key: CALENDAR_PAGE
-        value: https://www.letstalkalberta.com/political-calendar
+        value: https://lta-calendar.onrender.com/calendar   # change to https://www.letstalkalberta.com/political-calendar once the NationBuilder page is live
       - key: ALLOWED_ORIGINS
         value: https://www.letstalkalberta.com,https://letstalkalberta.com
       - key: AI_DAILY_LIMIT
