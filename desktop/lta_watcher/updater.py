@@ -24,5 +24,12 @@ def check_and_install(install=False):
     if os.name != "nt": return {"ok": False, "message": "Updates install on Windows only."}
     path = os.path.join(tempfile.gettempdir(), asset["name"])
     urllib.request.urlretrieve(asset["browser_download_url"], path)
-    subprocess.Popen([path, "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CLOSEAPPLICATIONS"], close_fds=True)
-    return {"ok": True, "message": "Installing the update. LTA Watcher will restart in a moment.", "installing": True}
+    log = os.path.join(tempfile.gettempdir(), "LTA-Watcher-update.log")
+    # Start the installer detached, then quit this app so its files can be replaced.
+    # The installer starts LTA Watcher again when it finishes ([Run] entry in installer.iss).
+    flags = 0x00000008 | 0x00000200  # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
+    subprocess.Popen([path, "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CLOSEAPPLICATIONS", f"/LOG={log}"],
+                     close_fds=True, creationflags=flags)
+    import threading
+    threading.Timer(1.5, lambda: os._exit(0)).start()
+    return {"ok": True, "message": "Installing the update. LTA Watcher will close and reopen in about 30 seconds.", "installing": True}
