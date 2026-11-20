@@ -252,7 +252,8 @@ Rules:
 - evidence_quote must be copied exactly from the text, character for character, and must contain the date.
 - Times are Alberta local time.
 - summary must be your own neutral wording: no opinions, no adjectives about parties or people.
-- If there are no qualifying events, return an empty list."""
+- If there are no qualifying events, return an empty list.
+Always answer by calling the report_events tool exactly once, even when the list is empty. Do not answer in prose."""
 
 def ai_extract(src, text):
     if os.environ.get("LTA_FAKE_AI_FILE"):  # offline testing only: canned AI answers keyed by source id
@@ -265,7 +266,7 @@ def ai_extract(src, text):
     body = {
         "model": MODEL, "max_tokens": 4000,
         "system": AI_SYSTEM.format(today=TODAY.isoformat()) + hint,
-        "tools": [AI_TOOL], "tool_choice": {"type": "tool", "name": "report_events"},
+        "tools": [AI_TOOL], "tool_choice": {"type": "auto"},  # some models refuse a forced tool choice
         "messages": [{"role": "user", "content": f"Source: {src['name']} ({src['url']})\nToday: {TODAY.isoformat()}\n\nPAGE TEXT:\n{text}"}],
     }
     req = urllib.request.Request("https://api.anthropic.com/v1/messages", data=json.dumps(body).encode(),
@@ -282,9 +283,24 @@ def ai_extract(src, text):
             if e.code in (401, 403): raise RuntimeError("AI key was rejected (expired or revoked). Make a new key at console.anthropic.com and update ANTHROPIC_API_KEY in Render.")
             if e.code == 400 and "credit" in detail.lower(): raise RuntimeError("Anthropic account is out of credit. Add credit at console.anthropic.com.")
             raise RuntimeError(f"AI reader error {e.code}; will retry.")
+    return parse_ai_reply(res)
+
+def parse_ai_reply(res):
+    """Read the events from the model's reply: the report_events tool call, or failing that a JSON
+    object in its text. Anything else counts as 'no events' (and is logged)."""
+    texts = []
     for block in res.get("content", []):
-        if block.get("type") == "tool_use":
-            return block["input"].get("events", [])
+        if block.get("type") == "tool_use" and block.get("name") == "report_events":
+            return (block.get("input") or {}).get("events", []) or []
+        if block.get("type") == "text": texts.append(block.get("text", ""))
+    text = "\n".join(texts)
+    m = re.search(r"\{.*\}", text, re.S)
+    if m:
+        try:
+            data = json.loads(m.group(0))
+            if isinstance(data, dict) and isinstance(data.get("events"), list): return data["events"]
+        except ValueError: pass
+    if text.strip(): _p(f"  [note] AI answered without the tool: {text[:200]!r}")
     return []
 
 def norm_ws(s): return re.sub(r"\s+", " ", s or "").strip().lower()
