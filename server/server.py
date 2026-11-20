@@ -228,7 +228,9 @@ class H(BaseHTTPRequestHandler):
         self.cors(); self.end_headers(); self.wfile.write(b)
     def body(self):
         n = int(self.headers.get("Content-Length", "0") or 0)
-        if n > 20000: raise ValueError("Request too large.")
+        # PCs upload whole event lists and page text for the AI reader; public forms stay small
+        cap = 2_000_000 if urlparse(self.path).path == "/api/hub/results" else 20_000
+        if n > cap: raise ValueError("Request too large.")
         try: return json.loads(self.rfile.read(n) or b"{}")
         except ValueError: raise ValueError("Bad request.")
     def do_OPTIONS(self): self.send_response(204); self.cors(); self.end_headers()
