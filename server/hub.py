@@ -80,9 +80,20 @@ def add_user(name, email, role="reviewer"):
     with _db() as c: c.execute("INSERT INTO users(id,name,email,pw,role,created) VALUES(?,?,?,?,?,?)", (secrets.token_hex(6), name, email.lower().strip(), hash_pw(pw), role, now().isoformat()))
     return pw
 
+def bootstrap_admin():
+    """First start: create the admin from BOOTSTRAP_ADMIN_* settings if there are no users yet."""
+    email = os.environ.get("BOOTSTRAP_ADMIN_EMAIL", "").strip().lower(); pw = os.environ.get("BOOTSTRAP_ADMIN_PASSWORD", "")
+    name = os.environ.get("BOOTSTRAP_ADMIN_NAME", "Admin").strip()
+    with _db() as c:
+        if c.execute("SELECT COUNT(*) n FROM users").fetchone()["n"]: return
+        if not email or len(pw) < 10:
+            print("No users yet. Set BOOTSTRAP_ADMIN_EMAIL and BOOTSTRAP_ADMIN_PASSWORD (10+ characters) to create the first admin."); return
+        c.execute("INSERT INTO users(id,name,email,pw,role,must_change,created) VALUES(?,?,?,?,?,0,?)", (secrets.token_hex(6), name, email, hash_pw(pw), "admin", now().isoformat()))
+    print(f"Created first admin: {name} <{email}>")
+
 # ------------------------------------------------------------------ sources and work sharing
 def sources():
-    return watch.jload(ROOT / "watcher/sources.json", {"sources": []})["sources"]
+    return watch.jload(watch.sources_path(), {"sources": []})["sources"]
 
 def online_nodes(c):
     cutoff = (now() - dt.timedelta(minutes=ONLINE_MIN)).isoformat()
@@ -117,8 +128,10 @@ def record_run(src_id, node, ok, hash_=None, error=None):
     st[src_id] = {"hash": hash_ or prev.get("hash"), "checked": t, "by": node}
     watch.jsave(watch.STATE, st)
 
+def key_set(): return len(os.environ.get("ANTHROPIC_API_KEY", "").strip()) > 20
+
 def ai_allowed():
-    if not os.environ.get("ANTHROPIC_API_KEY"): return False, "AI reader is off (no key on the server)"
+    if not key_set(): return False, "AI reader is off (no key on the server)"
     if os.environ.get("AI_ENABLED", "1") == "0": return False, "AI reader switched off on the server"
     day = now().date().isoformat()
     with _db() as c:
@@ -285,13 +298,48 @@ def handle(hd, method, path, body):
             log = [dict(r) for r in c.execute("SELECT * FROM audit ORDER BY at DESC LIMIT 30")]
         for n in nodes: n["online"] = n["id"] in online
         srcs = [dict(s, run=runs.get(s["id"]), assigned_to=owner(s["id"], online)) for s in sources()]
-        ok, why = (bool(os.environ.get("ANTHROPIC_API_KEY")) and os.environ.get("AI_ENABLED", "1") != "0"), ""
+        ok = key_set() and os.environ.get("AI_ENABLED", "1") != "0"
         hd.out(200, {"nodes": nodes, "sources": srcs, "ai": {"on": ok, "calls_today": usage["calls"] if usage else 0, "daily_limit": AI_DAILY_LIMIT},
                      "pending": len(watch.jload(DATA / "pending.json", {"pending": []})["pending"]), "audit": log, "you": {"name": who, "role": u["role"]}}); return True
 
+    # ---- admin: people and PCs (so nothing needs the command line)
+    if p.startswith("admin/"):
+        if u["role"] != "admin": hd.out(403, {"error": "Only admins can do that."}); return True
+        a = p[6:]
+        if a == "pc-code" and method == "POST":
+            hours = max(1, min(int(body.get("hours", 72) or 72), 24 * 14))
+            code = new_enroll_code(hours); audit(who, "made PC setup code", "", f"valid {hours} h")
+            hd.out(200, {"code": code, "hours": hours}); return True
+        if a == "users" and method == "GET":
+            with _db() as c: rows = [dict(r) for r in c.execute("SELECT id,name,email,role,active,must_change,created FROM users ORDER BY name")]
+            hd.out(200, {"users": rows}); return True
+        if a == "users" and method == "POST":
+            act = body.get("action", "add")
+            if act == "add":
+                name = str(body.get("name", "")).strip()[:80]; email = str(body.get("email", "")).strip().lower()[:120]
+                role = "admin" if body.get("role") == "admin" else "reviewer"
+                if not name or "@" not in email: raise ValueError("Name and a valid email are required.")
+                try: pw = add_user(name, email, role)
+                except sqlite3.IntegrityError: raise ValueError("Someone with that email already exists.")
+                audit(who, f"added {role}", email, name); hd.out(200, {"temp_password": pw}); return True
+            uid = str(body.get("id", ""))
+            if uid == u["id"]: raise ValueError("You can't change your own account here.")
+            with _db() as c:
+                if act == "deactivate": c.execute("UPDATE users SET active=0 WHERE id=?", (uid,)); c.execute("DELETE FROM sessions WHERE user_id=?", (uid,))
+                elif act == "activate": c.execute("UPDATE users SET active=1 WHERE id=?", (uid,))
+                elif act == "reset":
+                    pw = secrets.token_urlsafe(9); c.execute("UPDATE users SET pw=?, must_change=1 WHERE id=?", (hash_pw(pw), uid)); c.execute("DELETE FROM sessions WHERE user_id=?", (uid,))
+                    audit(who, "reset password", uid); hd.out(200, {"temp_password": pw}); return True
+                else: raise ValueError("Unknown action.")
+            audit(who, act, uid); hd.out(200, {"ok": True}); return True
+        if a == "pcs" and method == "POST":
+            with _db() as c: c.execute("UPDATE nodes SET enabled=? WHERE id=?", (1 if body.get("action") == "enable" else 0, str(body.get("id", ""))))
+            audit(who, f"PC {body.get('action')}", str(body.get("id", ""))); hd.out(200, {"ok": True}); return True
+        hd.out(404, {"error": "Not found"}); return True
+
     if p == "sources" and method == "POST":
         if u["role"] != "admin": hd.out(403, {"error": "Only admins can change sources."}); return True
-        doc = watch.jload(ROOT / "watcher/sources.json", {"sources": []})
+        doc = watch.jload(watch.sources_path(), {"sources": []})
         s = body.get("source") or {}; action = body.get("action")
         with _lock:
             if action == "add":
@@ -305,7 +353,7 @@ def handle(hd, method, path, body):
                 for x in doc["sources"]:
                     if x["id"] == s.get("id"): x["enabled"] = action == "enable"
             else: raise ValueError("Unknown action.")
-            watch.jsave(ROOT / "watcher/sources.json", doc)
+            watch.jsave(DATA / "sources.json", doc)
         audit(who, f"source {action}", s.get("id", ""), s.get("url", "")); hd.out(200, {"ok": True}); return True
 
     hd.out(404, {"error": "Not found"}); return True

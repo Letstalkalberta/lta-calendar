@@ -38,7 +38,7 @@ sys.path.insert(0, str(ROOT / "watcher"))
 sys.path.insert(0, str(ROOT / "server"))
 DATA = ROOT / "data"
 PORT = int(os.environ.get("PORT", "8080"))
-PUBLIC = os.environ.get("PUBLIC_BASE", f"http://localhost:{PORT}").rstrip("/")
+PUBLIC = (os.environ.get("PUBLIC_BASE") or os.environ.get("RENDER_EXTERNAL_URL") or f"http://localhost:{PORT}").rstrip("/")
 PAGE = os.environ.get("CALENDAR_PAGE", "https://www.letstalkalberta.com/political-calendar")
 ORIGINS = [o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "https://www.letstalkalberta.com,https://letstalkalberta.com").split(",") if o.strip()]
 ADMIN_KEY = os.environ.get("ADMIN_KEY", "")
@@ -262,6 +262,8 @@ class H(BaseHTTPRequestHandler):
         m = re.fullmatch(r"/rides/manage/([A-Za-z0-9_-]{20,})", p)
         if m:
             pg = manage_page(m.group(1)); return self.out(200 if pg else 404, pg or page("Not found", "<h1>That link has expired</h1><p>Ride details are deleted one day after the event.</p>"), "text/html; charset=utf-8")
+        if p in ("/admin", "/admin/"):
+            return self.out(200, (ROOT / "server/admin.html").read_bytes(), "text/html; charset=utf-8")
         if p == "/admin/review":
             k = (q.get("key") or [""])[0]
             if not ADMIN_KEY or not secrets.compare_digest(k, ADMIN_KEY): return self.out(403, page("No access", "<h1>No access</h1>"), "text/html; charset=utf-8")
@@ -361,11 +363,30 @@ def housekeeping():
         except Exception as ex: print("housekeeping:", ex)
         time.sleep(3600)
 
+def scheduler():
+    """Backup watcher (sites no PC has checked in a day) every 6 hours; app push every 15 minutes."""
+    import watch
+    last_watch = 0
+    time.sleep(60)
+    while True:
+        if time.time() - last_watch > 6 * 3600:
+            try:
+                watch.run(stale_hours=24, lock=LOCK)
+            except Exception as ex: print("backup watch:", ex)
+            last_watch = time.time()
+        if os.environ.get("FCM_PROJECT_ID"):
+            try:
+                import subprocess; subprocess.run([sys.executable, str(ROOT / "server/push.py")], timeout=300)
+            except Exception as ex: print("push:", ex)
+        time.sleep(900)
+
 import hub  # noqa: E402  (PCs and reviewers)
 
 if __name__ == "__main__":
     init_db()
     hub.setup(db, LOCK)
+    hub.bootstrap_admin()
     threading.Thread(target=housekeeping, daemon=True).start()
+    if os.environ.get("RUN_SCHEDULER", "1") == "1": threading.Thread(target=scheduler, daemon=True).start()
     print(f"LTA calendar server on :{PORT}  public base {PUBLIC}")
     ThreadingHTTPServer(("0.0.0.0", PORT), H).serve_forever()

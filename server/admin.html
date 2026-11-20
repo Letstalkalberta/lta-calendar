@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>LTA Calendar Admin</title>
+<style>
+:root{--blue:#0B2C6E;--red:#C8102E;--gold:#E8A800;--cream:#FDF7EC;--ink:#1d2433;--muted:#5b6474;--line:#e3dccd;--ok:#2e7d4f}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,"Segoe UI",Arial,sans-serif;color:var(--ink);background:#f6f4ef;font-size:16px}
+h1,h2,h3{font-family:Georgia,serif;color:var(--blue);margin:0 0 6px}
+header{background:var(--blue);color:#fff;padding:14px 16px;border-bottom:4px solid var(--gold);display:flex;align-items:center;gap:10px}
+header h1{color:#fff;font-size:20px;flex:1;margin:0}header small{color:#c9d3ea}
+nav{display:flex;overflow-x:auto;background:var(--cream);border-bottom:1px solid var(--line)}
+nav button{flex:1;min-width:84px;border:0;background:none;padding:12px 8px;font:inherit;font-size:15px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent}
+nav button[aria-selected=true]{color:var(--blue);border-bottom-color:var(--red)}
+main{padding:14px;max-width:760px;margin:0 auto}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+button.b{font:inherit;font-size:15px;font-weight:600;border-radius:999px;padding:10px 16px;border:1px solid var(--blue);background:#fff;color:var(--blue)}
+button.p{background:var(--red);border-color:var(--red);color:#fff}button.w{border-color:#fff;background:transparent;color:#fff;padding:6px 12px;font-size:13px}
+input,select,textarea{font:inherit;font-size:16px;width:100%;border:1px solid #cfc6b3;border-radius:10px;padding:10px;background:#fff;margin:4px 0 10px}
+label{font-size:14px;font-weight:600}.muted{color:var(--muted);font-size:14px}
+.err{background:#fde8eb;border:1px solid #f3b5bf;color:#7a1023;padding:10px;border-radius:10px;margin:8px 0}
+.ok{background:#eaf5ee;border:1px solid #b9dcc2;color:#1f5a33;padding:10px;border-radius:10px;margin:8px 0}
+.quote{background:var(--cream);border-left:4px solid var(--gold);padding:8px 10px;font-style:italic;margin:8px 0}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#bbb;margin-right:6px}.dot.on{background:var(--ok)}.dot.bad{background:var(--red)}
+.code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:28px;letter-spacing:2px;text-align:center;background:var(--cream);border:2px dashed var(--gold);border-radius:12px;padding:14px;margin:10px 0;user-select:all}
+.item{border-top:1px solid var(--line);padding:10px 0}.item:first-child{border-top:0}
+.check{display:flex;gap:8px;align-items:flex-start;font-weight:400}.check input{width:auto;margin-top:3px}
+</style></head><body>
+<header><h1>LTA Calendar Admin</h1><small id="who"></small><button class="b w" id="out" hidden>Sign out</button></header>
+<nav id="nav" hidden><button data-t="review" aria-selected="true">Review</button><button data-t="pcs">PCs</button><button data-t="people">People</button><button data-t="status">Status</button></nav>
+<main id="m"></main>
+<script>
+let T=null, ME=null, tab="review";
+try{ T=sessionStorage.getItem("lta_admin_t"); }catch(e){}
+const $=s=>document.querySelector(s), m=$("#m");
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+async function api(method,path,body){ const r=await fetch("/api/hub/"+path,{method,headers:Object.assign({"Content-Type":"application/json"},T?{Authorization:"Bearer "+T}:{}),body:body?JSON.stringify(body):undefined});
+  const j=await r.json().catch(()=>({error:"No response from server"})); if(r.status===401&&path!=="login"){ signOut(); throw new Error("Please sign in again."); } if(!r.ok) throw new Error(j.error||"Something went wrong"); return j; }
+function save(t){ T=t; try{ t?sessionStorage.setItem("lta_admin_t",t):sessionStorage.removeItem("lta_admin_t"); }catch(e){} }
+function signOut(){ if(T) fetch("/api/hub/logout",{method:"POST",headers:{Authorization:"Bearer "+T}}).catch(()=>{}); save(null); ME=null; render(); }
+const when=e=>{ const s=String(e.start); if(s.length===10) return s+" (all day)"; return new Date(s).toLocaleString("en-CA",{timeZone:"America/Regina",weekday:"short",month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"})+" Alberta time"; };
+const ago=s=>s?s.slice(0,16).replace("T"," "):"never";
+
+async function render(){
+  $("#out").hidden=$("#nav").hidden=!T;
+  if(!T) return signIn();
+  try{ ME=await api("GET","me"); }catch(e){ return; }
+  $("#who").textContent=ME.name;
+  if(ME.must_change) return changePw(true);
+  document.querySelectorAll("nav button").forEach(b=>b.setAttribute("aria-selected",b.dataset.t===tab));
+  ({review,pcs,people,status})[tab]();
+}
+function signIn(){
+  m.innerHTML=`<div class="card"><h2>Sign in</h2><div id="e"></div><label>Email</label><input id="em" type="email" autocomplete="username"><label>Password</label><input id="pw" type="password" autocomplete="current-password"><button class="b p" id="go">Sign in</button></div>`;
+  const go=async()=>{ try{ const r=await api("POST","login",{email:$("#em").value,password:$("#pw").value}); save(r.token); render(); }catch(x){ $("#e").innerHTML=`<div class="err">${esc(x.message)}</div>`; } };
+  $("#go").onclick=go; $("#pw").onkeydown=e=>{ if(e.key==="Enter") go(); };
+}
+function changePw(forced){
+  m.innerHTML=`<div class="card"><h2>Choose your password</h2>${forced?'<p class="muted">You signed in with a temporary password. Pick your own to continue.</p>':""}<div id="e"></div>
+  <label>Current password</label><input id="o" type="password"><label>New password (10+ characters)</label><input id="n" type="password"><button class="b p" id="go">Save password</button></div>`;
+  $("#go").onclick=async()=>{ try{ await api("POST","password",{old:$("#o").value,new:$("#n").value}); save(null); m.innerHTML=`<div class="ok">Password saved. Sign in with the new one.</div>`; setTimeout(render,1200); }catch(x){ $("#e").innerHTML=`<div class="err">${esc(x.message)}</div>`; } };
+}
+async function review(){
+  m.innerHTML=`<p class="muted">Loading…</p>`;
+  const items=(await api("GET","review")).pending||[];
+  if(!items.length){ m.innerHTML=`<div class="card"><h3>Nothing waiting</h3><p class="muted">Events the AI reader finds on party sites, Elections Alberta and in the news show up here for a person to check before they go public.</p></div>`; return; }
+  m.innerHTML=items.map((x,i)=>`<div class="card" data-i="${i}"><h3>${esc(x.title)}</h3><div class="muted">${esc(when(x))}<br>${esc((x.location||{}).name||"")} ${esc((x.location||{}).address||"")}<br>${esc(x.level)}${x.party?" · "+esc(x.party):""} · ${esc(x.review?.confidence)} confidence</div>
+   <div class="quote">“${esc(x.review?.evidence_quote)}”</div><p>${esc(x.description)}</p>
+   <p><a href="${esc(x.source?.url)}" target="_blank" rel="noopener">Open the source: ${esc(x.source?.name)} ↗</a></p>
+   <label class="check"><input type="checkbox" data-ok> I opened the source and the date, time and place match it.</label><div data-e></div>
+   <div class="row"><button class="b p" data-a="approve">Approve</button><button class="b" data-a="reject">Reject</button></div></div>`).join("")+`<p class="muted">To fix details before approving, use LTA Watcher on a PC.</p>`;
+  m.querySelectorAll(".card[data-i]").forEach(c=>c.querySelectorAll("[data-a]").forEach(b=>b.onclick=async()=>{
+    const x=items[+c.dataset.i];
+    if(b.dataset.a==="approve"&&!c.querySelector("[data-ok]").checked){ c.querySelector("[data-e]").innerHTML=`<div class="err">Tick the box to confirm you checked the source.</div>`; return; }
+    try{ await api("POST","review",{id:x.id,action:b.dataset.a}); review(); }catch(e){ c.querySelector("[data-e]").innerHTML=`<div class="err">${esc(e.message)}</div>`; } }));
+}
+async function pcs(){
+  const st=await api("GET","status"), admin=ME.role==="admin";
+  m.innerHTML=(admin?`<div class="card"><h3>Add an LTA PC</h3><p class="muted">Make a one-time setup code, then type it into LTA Watcher on the new PC. Codes work once and expire after 3 days.</p><div id="cd"></div><button class="b p" id="mk">Make a setup code</button></div>`:"")+
+   `<div class="card"><h3>LTA PCs</h3>${st.nodes.length?st.nodes.map(n=>{const s=JSON.parse(n.status||"{}");return `<div class="item"><span class="dot ${n.online?"on":""}"></span><b>${esc(n.name)}</b>${n.enabled?"":" (turned off)"}<div class="muted">last seen ${esc(ago(n.last_seen))} · v${esc(n.version||"?")} · ${esc(s.checked_today??0)} checks today</div>${admin?`<button class="b" data-pc="${esc(n.id)}" data-en="${n.enabled?0:1}">${n.enabled?"Turn off":"Turn on"}</button>`:""}</div>`}).join(""):'<p class="muted">No PCs connected yet.</p>'}</div>`;
+  if(admin){ $("#mk").onclick=async()=>{ const r=await api("POST","admin/pc-code",{hours:72}); $("#cd").innerHTML=`<div class="code">${esc(r.code)}</div><p class="muted">Valid ${r.hours} hours, works once.</p>`; };
+    m.querySelectorAll("[data-pc]").forEach(b=>b.onclick=async()=>{ await api("POST","admin/pcs",{id:b.dataset.pc,action:b.dataset.en==="1"?"enable":"disable"}); pcs(); }); }
+}
+async function people(){
+  if(ME.role!=="admin"){ m.innerHTML=`<div class="card"><p>Signed in as ${esc(ME.name)} (${esc(ME.role)}).</p><button class="b" id="cp">Change my password</button></div>`; $("#cp").onclick=()=>changePw(false); return; }
+  const us=(await api("GET","admin/users")).users;
+  m.innerHTML=`<div class="card"><h3>Add a reviewer</h3><div id="e"></div><label>Name</label><input id="nm"><label>Email</label><input id="em" type="email"><label>Role</label><select id="rl"><option value="reviewer">Reviewer (approve, add events)</option><option value="admin">Admin (also PCs, people, sources)</option></select><button class="b p" id="add">Add</button></div>
+   <div class="card"><h3>People</h3>${us.map(x=>`<div class="item"><b>${esc(x.name)}</b> <span class="muted">${esc(x.email)} · ${esc(x.role)}${x.active?"":" · turned off"}${x.must_change?" · hasn't set own password":""}</span>${x.email!==ME.email?`<div class="row" style="margin-top:6px"><button class="b" data-u="${esc(x.id)}" data-a="reset">New temp password</button><button class="b" data-u="${esc(x.id)}" data-a="${x.active?"deactivate":"activate"}">${x.active?"Turn off":"Turn on"}</button></div>`:""}</div>`).join("")}</div>
+   <div class="card"><button class="b" id="cp">Change my password</button></div>`;
+  const show=(t)=>$("#e").innerHTML=`<div class="ok">Temporary password: <b style="user-select:all">${esc(t)}</b><br>Send it to them privately. They choose their own after signing in (here or in LTA Watcher).</div>`;
+  $("#add").onclick=async()=>{ try{ const r=await api("POST","admin/users",{action:"add",name:$("#nm").value,email:$("#em").value,role:$("#rl").value}); await people(); show(r.temp_password); }catch(x){ $("#e").innerHTML=`<div class="err">${esc(x.message)}</div>`; } };
+  m.querySelectorAll("[data-u]").forEach(b=>b.onclick=async()=>{ const r=await api("POST","admin/users",{action:b.dataset.a,id:b.dataset.u}); await people(); if(r.temp_password) show(r.temp_password); });
+  $("#cp").onclick=()=>changePw(false);
+}
+async function status(){
+  const st=await api("GET","status"), names=Object.fromEntries(st.nodes.map(n=>[n.id,n.name]));
+  m.innerHTML=`<div class="card"><h3>AI reader</h3><p class="muted">${st.ai.on?"On":"Off: add ANTHROPIC_API_KEY in the server settings"} · ${st.ai.calls_today} of ${st.ai.daily_limit} page reads used today · ${st.pending} waiting for review</p></div>
+   <div class="card"><h3>Websites</h3>${st.sources.map(s=>{const r=s.run||{};return `<div class="item"><span class="dot ${r.last_error?"bad":(r.last_ok?"on":"")}"></span><b>${esc(s.name)}</b>${s.enabled===false?" (off)":""}<div class="muted">${s.kind.startsWith("ai")?"AI reader → review":"Official calendar"} · last checked ${esc(ago(r.last_checked))}${r.last_node?" by "+esc(names[r.last_node]||r.last_node):""}${r.last_error?"<br>"+esc(r.last_error.slice(0,120)):""}</div></div>`}).join("")}</div>
+   <div class="card"><h3>Recent actions</h3>${st.audit.map(a=>`<div class="item muted">${esc(ago(a.at))} · <b>${esc(a.who)}</b> ${esc(a.action)} ${esc(a.detail||a.target)}</div>`).join("")}</div>`;
+}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{ tab=b.dataset.t; render(); });
+$("#out").onclick=signOut; render();
+</script></body></html>

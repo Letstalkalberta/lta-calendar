@@ -386,30 +386,40 @@ def ai_process(src, text, store, parties):
     return store.queued - before
 
 # ---------------------------------------------------------------- main (stand-alone / server cron)
-def run(only=None, stale_hours=None):
-    sources = jload(ROOT / "watcher/sources.json", {})["sources"]
+def sources_path():
+    """On the server, sources live on the data disk (admin edits survive redeploys)."""
+    d = DATA / "sources.json"
+    return d if d.exists() else ROOT / "watcher/sources.json"
+
+def run(only=None, stale_hours=None, lock=None):
+    """Read sources (slow, no lock held), then merge and save in one quick locked step."""
+    import contextlib
+    sources = jload(sources_path(), {})["sources"]
     parties = jload(DATA / "parties.json", {"parties": []})["parties"]
     state = jload(STATE, {})
-    store = Store()
     report = {"ok": [], "failed": [], "unchanged": []}
-    now = dt.datetime.now(AB)
+    now = dt.datetime.now(AB); results = []
     for src in sources:
-        if only and src["id"] not in only: continue
+        if (only and src["id"] not in only) or src.get("enabled") is False: continue
         st = state.get(src["id"], {})
         if stale_hours and st.get("checked") and now - dt.datetime.fromisoformat(st["checked"]) < dt.timedelta(hours=stale_hours):
             continue  # a PC checked it recently
         _p(f"- {src['id']} ({src['kind']})")
         try:
             r = check_source(src, st.get("hash"))
-            if r["kind"] == "structured": store.merge_structured(r["events"])
-            elif r["kind"] == "unchanged": report["unchanged"].append(src["id"]); _p("  unchanged since last check")
-            else: ai_process(src, r["text"], store, parties)
-            state[src["id"]] = {"hash": r.get("hash", st.get("hash")), "checked": now.isoformat(timespec="minutes"), "by": "server"}
-            report["ok"].append(src["id"])
+            items = ai_items_to_pending(src, ai_extract(src, r["text"]), r["text"], parties) if r["kind"] == "ai" else []
+            if r["kind"] == "unchanged": report["unchanged"].append(src["id"]); _p("  unchanged since last check")
+            results.append((src, r, items)); report["ok"].append(src["id"])
         except Exception as e:
             _p(f"  [failed] {type(e).__name__}: {e}")
             report["failed"].append({"id": src["id"], "error": f"{type(e).__name__}: {e}"})
-    store.save(); jsave(STATE, state)
+    with (lock or contextlib.nullcontext()):
+        store = Store(); state = jload(STATE, {})
+        for src, r, items in results:
+            if r["kind"] == "structured": store.merge_structured(r["events"])
+            elif items: store.queue(items)
+            state[src["id"]] = {"hash": r.get("hash", state.get(src["id"], {}).get("hash")), "checked": now.isoformat(timespec="minutes"), "by": "server"}
+        store.save(); jsave(STATE, state)
     report.update(added=store.added, updated=store.updated, queued=store.queued, checked_at=now.isoformat(timespec="minutes"))
     jsave(DATA / "watch_report.json", report)
     _p(json.dumps({k: v for k, v in report.items() if k != "unchanged"}, indent=1))

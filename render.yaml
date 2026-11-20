@@ -1,0 +1,36 @@
+# Render Blueprint: the LTA calendar server (hub for LTA Watcher PCs, calendar API, feeds, ride board).
+# On render.com: New > Blueprint > pick this repository. Render asks for the values marked "sync: false".
+services:
+  - type: web
+    name: lta-calendar
+    runtime: docker
+    dockerfilePath: ./deploy/Dockerfile
+    dockerContext: .
+    plan: starter
+    healthCheckPath: /health
+    autoDeploy: true
+    disk:
+      name: lta-data
+      mountPath: /app/data
+      sizeGB: 1
+    envVars:
+      - key: BOOTSTRAP_ADMIN_NAME
+        value: Christopher Scott
+      - key: BOOTSTRAP_ADMIN_EMAIL
+        value: cjscottx@gmail.com
+      - key: BOOTSTRAP_ADMIN_PASSWORD
+        sync: false        # the password you'll use to sign in (10+ characters). Only used on first start.
+      - key: ANTHROPIC_API_KEY
+        sync: false        # from console.anthropic.com; can be added later
+      - key: ADMIN_KEY
+        generateValue: true
+      - key: CALENDAR_PAGE
+        value: https://www.letstalkalberta.com/political-calendar
+      - key: ALLOWED_ORIGINS
+        value: https://www.letstalkalberta.com,https://letstalkalberta.com
+      - key: AI_DAILY_LIMIT
+        value: "300"
+      - key: CHECK_EVERY_HOURS
+        value: "6"
+      - key: DB_PATH
+        value: /app/data/lta.db
